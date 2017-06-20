@@ -88,7 +88,8 @@ export class GeneratorParamsComponent implements OnInit, AfterViewInit, AfterVie
 
    public generateCluster()
    {
-      // console.log( "generateCluster()");
+         const me = this.constructor.name + '.generateCluster(): ';
+      console.log( me + `numSystems = ${this.numSystems}`);
       if (this.parmsForm.form.valid)
       {
          this._requestedClusterName = null;

@@ -43,7 +43,8 @@ export class PersistenceService
     */
    public get currentCluster(): Cluster {
       return (this._currentGeneratedCluster && this._currentGeneratedCluster.value)
-         || (this._currentPersistedCluster && this._currentPersistedCluster.value);
+         || (this._currentPersistedCluster && this._currentPersistedCluster.value)
+         || new Cluster();
    }
 
    public set currentGeneratedCluster( aCluster: Cluster) {

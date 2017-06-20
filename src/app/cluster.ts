@@ -150,7 +150,7 @@ export class Cluster {
    /**
     * Generate the starsystems and slipstreams that define the cluster.
     */
-   generate( aNumSystems: number, aUseHighLowSlipstreams: boolean)
+   public generate( aNumSystems: number, aUseHighLowSlipstreams: boolean): void
    {
       const me = this.constructor.name + '.generate(): ';
       this.uid = null;
@@ -161,6 +161,7 @@ export class Cluster {
       
       this.systemMap = new Map<string,StarSystem>();
       
+      console.log( me + `Generating ${aNumSystems} systems`);
       // Systems
       for (let i = 0; i < aNumSystems; i++)
       {
