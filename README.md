@@ -2,6 +2,9 @@
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 1.0.0-rc.4.
 
+Project was promoted from a subfolder of another project, Diaspora/AngularClusterGenerator (q.v.).  That source code
+repository should be dead, but all issues in that repository are still live.
+
 ## More notes in other files
 
 See
