@@ -552,7 +552,7 @@ export class PersistenceService
    {
       if (! this._db) this._db = firebase.database();
       const dbRef = this._db.ref( aNoSqlTreeNodeName);
-      const retval = Observable.fromEventPattern(
+      const retval = <Observable<firebase.database.DataSnapshot>> Observable.fromEventPattern(
          (function addHandler( h: (a: firebase.database.DataSnapshot, b?: string) => any) {
             // Need to explicitly bind to firebaseError here because there's no easy way (that I can tell) to
             // generate/catch errors using the Observable subscription.
