@@ -43,8 +43,7 @@ export class PersistenceService
     */
    public get currentCluster(): Cluster {
       return (this._currentGeneratedCluster && this._currentGeneratedCluster.value)
-         || (this._currentPersistedCluster && this._currentPersistedCluster.value)
-         || new Cluster();
+         || (this._currentPersistedCluster && this._currentPersistedCluster.value);
    }
 
    public set currentGeneratedCluster( aCluster: Cluster) {
@@ -151,6 +150,22 @@ export class PersistenceService
 
    // ------------------------------------------------  Public Methods  ------------------------------------------------
    
+   /**
+    * Ensure that this service actually has a cluster (which may be en empty dumy).
+    */
+   public ensureCluster(): void
+   {
+      if (this.currentCluster)
+      {
+         // Do nothing
+      }
+      else
+      {
+         // Just make one up!
+         this._currentGeneratedCluster = new BehaviorSubject( new Cluster());
+      }
+   }
+
    /**
     * Initialize firebase and hook up AuthStateChanged event.
     */

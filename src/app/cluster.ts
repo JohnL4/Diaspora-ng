@@ -9,10 +9,14 @@ import { dice, fateThrow, alphaBravo, uniqueClusterNameFromUid } from './utils';
 /**
  * A cluster of star systems.
  */
-@Injectable()
+// @Injectable()
 export class Cluster {
 
+   private static __ctorCount = 0;
+
    // -------------------------------------------  Data Members, Properties  -------------------------------------------
+
+   public id: number;
    
    /**
     * Unique id identifying cluster (so names can be non-unique, which might be important if a user creates a cluster
@@ -98,6 +102,9 @@ export class Cluster {
     */
    public constructor(anObject?: Object)
    {
+      this.id = Cluster.__ctorCount++;
+      const me = `Cluster.${this.id}.<ctor>(): `;
+      console.log( me);
       if (anObject)
       {
          if (anObject['uid'])
@@ -152,7 +159,7 @@ export class Cluster {
     */
    public generate( aNumSystems: number, aUseHighLowSlipstreams: boolean): void
    {
-      const me = this.constructor.name + '.generate(): ';
+      const me = this.constructor.name + `.${this.id}.generate(): `;
       this.uid = null;
       this.name = null;
       this.usesHighLowSlipstreams = aUseHighLowSlipstreams;

@@ -88,17 +88,17 @@ export class GeneratorParamsComponent implements OnInit, AfterViewInit, AfterVie
 
    public generateCluster()
    {
-         const me = this.constructor.name + '.generateCluster(): ';
+      const me = this.constructor.name + '.generateCluster(): ';
       console.log( me + `numSystems = ${this.numSystems}`);
       if (this.parmsForm.form.valid)
       {
          this._requestedClusterName = null;
-         
-         // Note that we don't simply new up a new Cluster, because the injector is managing the one we were passed.
-         // Instead, we modify the existing one in place.  (NOTE: now that we've gotten rid of the injected Cluster, we
-         // don't have to do it this way.)
-         this.cluster.generate( Number( this.numSystems), this.useHighLowSlipstreams);
 
+         this._persistenceSvc.ensureCluster();
+         console.log( me + `generating cluster w/id ${this.cluster.id}`);
+         this.cluster.generate( Number( this.numSystems), this.useHighLowSlipstreams);
+         console.log( me + `Generated cluster (w/id ${this.cluster.id}) containing ${this.cluster.systemMap}`);
+         
          if (localStorage)
          {
             if (! this._serializer)
