@@ -208,25 +208,7 @@ export class PersistenceService
     */
    public login(): void
    {
-      const me =  this.constructor.name + '.login(): ';
-      console.log( me);
-      if (! this._authProvider)
-         this._authProvider = new firebase.auth.GoogleAuthProvider();
-      console.log( me + 'signing in with redirect');
-      // alert( "signing in w/redirect");
-      firebase.auth().signInWithRedirect( this._authProvider);
-      // alert( "about to process redirect result");
-      firebase.auth().getRedirectResult().then( (function( result: firebase.auth.UserCredential) {
-         if (result.credential) {
-            this._googleAccessToken = result.credential;
-            console.log( me + `accessToken = "${this._googleAccessToken}`);
-         }
-         this._user = result.user;
-         console.log( me + `logged in user "${this._user}"`);
-         // alert( "login done");
-      }).bind( this)).catch( (function( error: Error) {
-         console.log( `${me} ${error.message}`)}).bind( this));
-      console.log( me + 'done');
+      this._loginWithPopup();
    }
 
    public logout()
@@ -357,6 +339,53 @@ export class PersistenceService
 
    // -----------------------------------------------  Private Methods  ------------------------------------------------
    
+   private _loginWithPopup(): void
+   {
+      const me = this.constructor.name + '._loginWithPopup(): ';
+      if (! this._authProvider)
+         this._authProvider = new firebase.auth.GoogleAuthProvider();
+      firebase.auth().signInWithPopup( this._authProvider).then(function (result)
+      {
+         // This gives you a Google Access Token. You can use it to access the Google API.
+         var token = result.credential.accessToken;
+         // The signed-in user info.
+         var user = result.user;
+         // ...
+      }).catch(function (error: any)
+      {
+         // Handle Errors here.
+         var errorCode = error.code;
+         var errorMessage = error.message;
+         // The email of the user's account used.
+         var email = error.email;
+         // The firebase.auth.AuthCredential type that was used.
+         var credential = error.credential;
+         alert( me + `Error: code = ${errorCode}; msg = ${errorMessage}\nemail = ${email}; credential = ${credential}`);
+      });
+   }
+
+   private _loginWithRedirect(): void
+   {
+      const me =  this.constructor.name + '.login(): ';
+      console.log( me);
+      if (! this._authProvider)
+         this._authProvider = new firebase.auth.GoogleAuthProvider();
+      console.log( me + 'signing in');
+      firebase.auth().signInWithRedirect( this._authProvider);
+      // alert( "about to process redirect result");
+      firebase.auth().getRedirectResult().then( (function( result: firebase.auth.UserCredential) {
+         if (result.credential) {
+            this._googleAccessToken = result.credential;
+            console.log( me + `accessToken = "${this._googleAccessToken}`);
+         }
+         this._user = result.user;
+         console.log( me + `logged in user "${this._user}"`);
+         // alert( "login done");
+      }).bind( this)).catch( (function( error: Error) {
+         console.log( `${me} ${error.message}`)}).bind( this));
+      console.log( me + 'done');
+   }
+
    private authStateChanged( aFirebaseUser): void
    {
       const me = this.constructor.name + '.authStateChanged(): ';
