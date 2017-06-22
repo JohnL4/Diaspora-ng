@@ -400,15 +400,23 @@ export class PersistenceService
          if (this._curUser.uid)
          {
             if (! this._db) this._db = firebase.database();
-            const uidRef = this._db.ref( `/users/${this._curUser.uid}`);
-            console.log( me + `uidRef = ${uidRef}`);
-            const userProps = { name: this._curUser.name,
-                              email: this._curUser.email,
-                              lastLogin: this._curUser.lastLogin.toISOString(),
-                              timeZoneOffset: this._curUser.lastLogin.getTimezoneOffset()
-                            };
-            uidRef.update( userProps); // Performs insert if key doesn't exist, so that's good.
-            this.connectToDatabase();
+            const dbRef = this._db.ref();
+            console.log( me + `dbRef = ${dbRef}`);
+            // userPublicProps: publicly-readable data for a user
+            const userPublicProps = { name: this._curUser.name }
+            // userProps: private data for a user.
+            // const userProps = { email: this._curUser.email,
+            //                   lastLogin: this._curUser.lastLogin.toISOString(),
+            //                   timeZoneOffset: this._curUser.lastLogin.getTimezoneOffset()
+            //                 };
+            const updates = Object.create( null);
+            updates[`/usersPublic/${this._curUser.uid}`]= userPublicProps;
+            updates[`/users/${this._curUser.uid}/email`] = this._curUser.email;
+            updates[`/users/${this._curUser.uid}/lastLogin`] = this._curUser.lastLogin;
+            updates[`/users/${this._curUser.uid}/timeZoneOffset`] = this._curUser.lastLogin.getTimezoneOffset();
+            dbRef.update( updates); // Performs insert if key doesn't exist, so that's good.
+
+            this.connectToDatabase(); // Now go get the clusters available to the current user.
          }
          else
             console.log( me + `WARNING: no uid for user ${this._curUser.name}`);
@@ -489,7 +497,7 @@ export class PersistenceService
       //       .connect();                        // Actually starts the base Observable running, with updates to the
       //                                          //   subject.
 
-         this._users = this.makeDatabaseSnapshotObservable( '/users').map( s => this.parseUsers( s.val()));
+         this._users = this.makeDatabaseSnapshotObservable( '/usersPublic').map( s => this.parseUsers( s.val()));
          this._users.subscribe( map => {this._latestUserMap = map; });
 
          // TODO: make Behavior Subject containing cluster arrays?  Answer: YES, probably a good idea.  Then we wouldn't
@@ -513,6 +521,8 @@ export class PersistenceService
     */
    private handleVisibleClusterListChange( aClusterUidsObject: Object): void
    {
+      const me = this.constructor.name + '.handleVisibleClusterListChange(): ';
+      console.log( me);
       // We're using the _seenClusterMap to manage subscriptions (new ones and unsubscribing from deleted clusters).
       this._seenClusterMap.forEach( sc => {sc.seen = false; });
       for (const clusterUid in aClusterUidsObject)
@@ -567,6 +577,8 @@ export class PersistenceService
    // throttled before being sorted into a list for display.
    private updateAndPublishClusterMap( aCluster: Cluster): void
    {
+      const me = this.constructor.name + '.updateAndPublishClusterMap(): ';
+      console.log( me);
       this._visibleClusterMap.set( aCluster.uid, aCluster);
       this._visibleClusterMapSubject.next( this._visibleClusterMap);
    }
@@ -577,6 +589,8 @@ export class PersistenceService
     */
    private sortAndPublishMetadata( aClusterMetadataMap: Map<Uid, Cluster>)
    {
+      const me = this.constructor.name + '.sortAndPublishMetadata(): ';
+      console.log( me);
       const metadataList = new Array<Cluster>();
       aClusterMetadataMap.forEach( (cluster: Cluster, uid: Uid) => metadataList.push( cluster));
       metadataList.sort( (a, b) => 
@@ -585,6 +599,7 @@ export class PersistenceService
                   else if (a.name === b.name) return 0;
                   else return 1;
             });
+      console.log( me + `metadataList has ${metadataList.length} items`);
       this._clusterMetadata.next( metadataList);
    }
    
