@@ -25,9 +25,9 @@ export class PersistenceService
    // --------------------------------------------  Public Data, Accessors  --------------------------------------------
    
    /**
-    * Current User.
+    * Current User; may be null.
     */
-   public get currentUser(): User { return this._curUser; }
+   public get currentUser(): User { return this._curUser.value; }
 
    /**
     * The current cluster (which may not have been saved yet), as a Subject.
@@ -87,11 +87,8 @@ export class PersistenceService
    private _authProvider: firebase.auth.GoogleAuthProvider;
    private _googleAccessToken: firebase.auth.AuthCredential;
 
-   private _userPromise: Promise<User>;
+   // private _userPromise: Promise<User>;
 
-   private _users: Observable<Map<string, User>>;
-   private _latestUserMap: Map<string, User>;
-   
    // On "deferred" promises: this is for the situation in which, when we create the promise ("new Promise(...)"), we do
    // not start the asynchronous/blocking work that will result in promise fulfillment.  Instead, that work has either
    // already been started or will be started elsewhere/elsewhen.  So, we simply save off an object holding pointers to
@@ -101,8 +98,11 @@ export class PersistenceService
    // See
    // http://stackoverflow.com/questions/31069453/creating-a-es6-promise-without-starting-to-resolve-it/31069505#31069505
    //
-   private _userPromiseDeferred: {resolve: any, reject: any};
+   // private _userPromiseDeferred: {resolve: any, reject: any};
 
+   private _users: Observable<Map<string, User>>;
+   private _latestUserMap: Map<string, User>;
+   
 //   /**
 //    * List of names of clusters that are visible to the current user.
 //    */
@@ -134,7 +134,7 @@ export class PersistenceService
    private _currentPersistedCluster: BehaviorSubject<Cluster>;
    private _currentPersistedClusterSubscription: Subscription;
    
-   private _curUser: User;
+   private _curUser: BehaviorSubject<User> = new BehaviorSubject<User>(null);
    
    private _initialized = false;
 
@@ -183,8 +183,8 @@ export class PersistenceService
       
       firebase.initializeApp( this._firebaseConfig);
 
-      this._userPromise = new Promise(
-         ( resolve, reject) => this._userPromiseDeferred = {resolve: resolve, reject: reject});
+      // this._userPromise = new Promise(
+      //    ( resolve, reject) => this._userPromiseDeferred = {resolve: resolve, reject: reject});
       
       firebase.auth().onAuthStateChanged( this.authStateChanged.bind( this), this.authError.bind( this));
 
@@ -223,10 +223,10 @@ export class PersistenceService
       });
    }
    
-   public get user(): Promise<User>
-   {
-      return this._userPromise;
-   }
+   // public get user(): Promise<User>
+   // {
+   //    return this._userPromise;
+   // }
    
    /**
     * Initiate a request to the back end to load the cluster.
@@ -267,7 +267,7 @@ export class PersistenceService
     */
    public deleteCluster(aUniqueName: string): void
    {
-      if (!this._curUser)
+      if (!this.currentUser)
          return;
       const me = this.constructor.name + '.deleteCluster(): ';
       // const uniqueName = encodeURIComponent( aUniqueName);
@@ -282,7 +282,7 @@ export class PersistenceService
       if (!this._db) this._db = firebase.database();
 
       const updates = Object.create( null);
-      updates[`/users/${this._curUser.uid}/clusters/${aUniqueName}`] = null;
+      updates[`/users/${this.currentUser.uid}/clusters/${aUniqueName}`] = null;
       updates[`/clusters/${aUniqueName}`] = null;
       updates[`/clusterData/${aUniqueName}`] = null;
 
@@ -291,26 +291,26 @@ export class PersistenceService
    
    public saveCluster( aCluster: Cluster): void
    {
-      // let uniqueName = JSON.stringify( minimalEncode( uniqueClusterName( aCluster, this._curUser)));
-      // const uniqueName = encodeURIComponent( uniqueClusterName( aCluster, this._curUser));
+      // let uniqueName = JSON.stringify( minimalEncode( uniqueClusterName( aCluster, this.currentUser)));
+      // const uniqueName = encodeURIComponent( uniqueClusterName( aCluster, this.currentUser));
       let uniqueName: string;
       if (aCluster.uid)
          uniqueName = aCluster.uid;
       else
       {
-         uniqueName = uniqueClusterName( aCluster, this._curUser);
+         uniqueName = uniqueClusterName( aCluster, this.currentUser);
          aCluster.uid = uniqueName; // Assumed to be a straight UUId.
       }
       const dbRef = this._db.ref();
       const updates = Object.create( null);
 
       // Clusters visible to current user: this one that we're saving, for sure.
-      updates[`/users/${this._curUser.uid}/clusters/${aCluster.uid}`] = true;
+      updates[`/users/${this.currentUser.uid}/clusters/${aCluster.uid}`] = true;
 
       // Metadata
       const clusterProps = { 
             name: aCluster.name, 
-            lastAuthor: this._curUser.uid,
+            lastAuthor: this.currentUser.uid,
             lastChanged: new Date( Date.now()), 
             notes: aCluster.notes ? aCluster.notes : ''
       };
@@ -320,7 +320,7 @@ export class PersistenceService
       this._xmlSerializer.cluster = aCluster;
       const xml = this._xmlSerializer.serialize();
       const owners = Object.create( null); // TODO: do we need this?
-      owners[ `${this._curUser.uid}`] = 1;
+      owners[ `${this.currentUser.uid}`] = 1;
       const clusterDataProps = { xml: xml,
                                owners: owners
                              };
@@ -392,59 +392,64 @@ export class PersistenceService
       // let user: User;
       if (aFirebaseUser)
       {
-         this._curUser = new User( aFirebaseUser.uid,
+         const newUser = new User( aFirebaseUser.uid,
                           aFirebaseUser.displayName || aFirebaseUser.email || aFirebaseUser.uid,
                           aFirebaseUser.email,
                           new Date( Date.now()));
-         console.log( me + `User logged in: ${this._curUser} with provider ${aFirebaseUser.providerId}`);
-         if (this._curUser.uid)
+         console.log( me + `User logged in: ${newUser} with provider ${aFirebaseUser.providerId}`);
+         this._curUser.next( newUser);
+         if (newUser.uid)
          {
             if (! this._db) this._db = firebase.database();
             const dbRef = this._db.ref();
             console.log( me + `dbRef = ${dbRef}`);
             // userPublicProps: publicly-readable data for a user
-            const userPublicProps = { name: this._curUser.name }
+            const userPublicProps = { name: newUser.name }
             // userProps: private data for a user.
-            // const userProps = { email: this._curUser.email,
-            //                   lastLogin: this._curUser.lastLogin.toISOString(),
-            //                   timeZoneOffset: this._curUser.lastLogin.getTimezoneOffset()
+            // const userProps = { email: newUser.email,
+            //                   lastLogin: newUser.lastLogin.toISOString(),
+            //                   timeZoneOffset: newUser.lastLogin.getTimezoneOffset()
             //                 };
             const updates = Object.create( null);
-            updates[`/usersPublic/${this._curUser.uid}`]= userPublicProps;
-            updates[`/users/${this._curUser.uid}/email`] = this._curUser.email;
-            updates[`/users/${this._curUser.uid}/lastLogin`] = this._curUser.lastLogin;
-            updates[`/users/${this._curUser.uid}/timeZoneOffset`] = this._curUser.lastLogin.getTimezoneOffset();
+            updates[`/usersPublic/${newUser.uid}`]= userPublicProps;
+            updates[`/users/${newUser.uid}/email`] = newUser.email;
+            updates[`/users/${newUser.uid}/lastLogin`] = newUser.lastLogin;
+            updates[`/users/${newUser.uid}/timeZoneOffset`] = newUser.lastLogin.getTimezoneOffset();
             dbRef.update( updates); // Performs insert if key doesn't exist, so that's good.
 
-            this.connectToDatabase(); // Now go get the clusters available to the current user.
+            this.connectToDatabase( newUser); // Now go get the clusters available to the current user.
          }
          else
-            console.log( me + `WARNING: no uid for user ${this._curUser.name}`);
+            console.log( me + `WARNING: no uid for user ${newUser.name}`);
       }
       else
       {
          console.log( me + 'auth state changed, but passed user is null or empty, assuming logged out');
-         this._curUser = null;
+         this._curUser.next( null);
+         // this._clusterMetadata.next( new Array<Cluster>()); // Once we purge this list, we don't get further 
+                                                               // notifications if the user logs back in, so there's no 
+                                                               // easy way to get it back.
       }
-      this._userPromiseDeferred.resolve( this._curUser); // We know _userPromiseDeferred won't be null because we create it
-                                                      // before hooking up this event handler.
+      // this._userPromiseDeferred.resolve( this._curUser); // We know _userPromiseDeferred won't be null because we create it
+      //                                                 // before hooking up this event handler.
    }
 
    private authError( aFirebaseAuthError): void
    {
       const me = this.constructor.name + '.authError(): ';
       console.log( me + `auth error: ${aFirebaseAuthError.message}`);
-      this._userPromiseDeferred.reject( aFirebaseAuthError);
+      this._curUser.error( new Error( `${me} FireBase authentication error: ${aFirebaseAuthError.message}`));
+      // this._userPromiseDeferred.reject( aFirebaseAuthError);
    }
 
    /**
     * Establish initial d/b connections. Note that initial connections may result in Observables/Promises which will
     * result in further connection requests.
     */
-   private connectToDatabase()
+   private connectToDatabase( aUser: User)
    {
       const me = this.constructor.name + '.connectToDatabase(): ';
-      if (this._curUser && this._curUser.uid)
+      if (aUser && aUser.uid)
       {
          this._db = firebase.database();
          console.log( me + `initialized firebase, db = "${this._db}"`);
@@ -462,14 +467,14 @@ export class PersistenceService
          // this._visibleClusters = new BehaviorSubject<BehaviorSubject<Cluster>[]>(new Array<BehaviorSubject<Cluster>>());
          // this._visibleClusters.subscribe( clusters => this.handleVisibleClusterListChange( clusters));
 
-         /* this._visibleClusterUuids = */ this.makeDatabaseSnapshotObservable( `/users/${this._curUser.uid}/clusters`)
+         /* this._visibleClusterUuids = */ this.makeDatabaseSnapshotObservable( `/users/${aUser.uid}/clusters`)
             .map( s => <Object> s.val()) // Object of cluster uuids
             .subscribe( uidObject => this.handleVisibleClusterListChange( uidObject))
             ;
 
 //         // $uid/clusters is a list of unique names
 //         let visibleClusterNamesSubscription
-//            = this.makeDatabaseSnapshotObservable( `/users/${this._curUser.uid}/clusters`) 
+//            = this.makeDatabaseSnapshotObservable( `/users/${aUser.uid}/clusters`) 
 //            .map( s => { let uniqueNamesObj = s.val();
 //                         let names = new Array<BehaviorSubject<Cluster>>();
 //                         for (let uniqueName in uniqueNamesObj)

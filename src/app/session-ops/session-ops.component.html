@@ -47,6 +47,9 @@
     <!-- Refreshed as a result of the fact that ClusterPersistenceService.user is a promise. -->
     <p>Currently logged in as {{user.name}} (uid {{user.uid}}).</p> 
   </div>
+  <div class="col-sm-5" *ngIf="! user">
+     <p>Currently not logged in, but I wouldn't believe me if I were you.</p>
+  </div>
 </div>
 <div class="row">
   <div class="col-sm-1 col-sm-offset-6">

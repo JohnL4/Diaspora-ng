@@ -201,7 +201,7 @@ export class GeneratorParamsComponent implements OnInit, AfterViewInit, AfterVie
       }
       else
       {
-         console.log( `Warning: unable to determine whether control "${aFieldName}" has a required value missing`);
+         // console.log( `Warning: unable to determine whether control "${aFieldName}" has a required value missing`);
          retval = true;
       }
       return retval;

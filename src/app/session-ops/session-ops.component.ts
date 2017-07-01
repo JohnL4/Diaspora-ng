@@ -13,7 +13,7 @@ import { User } from '../user';
 })
 export class SessionOpsComponent implements OnInit
 {
-   public user: User;
+   public get user(): User { return this._persistenceSvc.currentUser; }
    public uuid: string;
       
    private get cluster(): Cluster { return this._persistenceSvc.currentClusterSubject.value; }
@@ -26,18 +26,18 @@ export class SessionOpsComponent implements OnInit
       // console.log( me + `JSON name: ${jsonStringifiedName}`);
    };
    
-   private getUser(): void
-   {
-      // ".then()" --> hooks up promise resolution event, I think.  Resolution will drive a UI "digest" cycle that will
-      // result in the UI being updated with new data.  At this point, I'll just go ahead and call Angular "amazing".
+   // private getUser(): void
+   // {
+   //    // ".then()" --> hooks up promise resolution event, I think.  Resolution will drive a UI "digest" cycle that will
+   //    // result in the UI being updated with new data.  At this point, I'll just go ahead and call Angular "amazing".
 
-      this._persistenceSvc.user.then( 
-         user => {
-            console.log( `user = ${user}`);
-            console.log( `cluster has ${this.cluster.numSystems} systems`);
-            this.user = user;
-         });
-   }
+   //    this._persistenceSvc.user.then( 
+   //       user => {
+   //          console.log( `user = ${user}`);
+   //          console.log( `cluster has ${this.cluster.numSystems} systems`);
+   //          this.user = user;
+   //       });
+   // }
 
    // -------------------------------------------------  constructors  -------------------------------------------------
 
@@ -45,7 +45,9 @@ export class SessionOpsComponent implements OnInit
 
    ngOnInit()
    {
-      this.getUser();           // I think this basically hooks up the promise resolution event.
+      const me = this.constructor.name + ".ngOnInit(): ";
+      console.log( me);
+      // this.getUser();           // I think this basically hooks up the promise resolution event.
       this.uuid = UUIDv4.generateUUID();
    }
 
@@ -61,9 +63,9 @@ export class SessionOpsComponent implements OnInit
    {
       let me = this.constructor.name + ".logout(): ";
       console.log( me + "logging out");
-      this.user = null;         // Not waiting for an authChanged event for two reasons: (1) the promise has certainly
-                                // already been resolved, and promises are one-time-only events, and (2) we already know
-                                // what the outcome of this call will be.
+      // this.user = null;         // Not waiting for an authChanged event for two reasons: (1) the promise has certainly
+      //                           // already been resolved, and promises are one-time-only events, and (2) we already know
+      //                           // what the outcome of this call will be.
       this._persistenceSvc.logout();
    }
 
