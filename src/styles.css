@@ -18,7 +18,7 @@ table.table.cluster-details th, table.table.cluster-details td {
    margin-left: 5%;
 }
 
-.explication h2, h3 {
+.explication h2, .explication h3 {
    margin-left: -5%;
 }
 
