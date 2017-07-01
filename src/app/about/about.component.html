@@ -12,9 +12,9 @@
 
    <dl>
       <dt>Left cell is Environment (think "sky")</dt>
-      <dd>Empty cell is 0. Red, negative; blue, positive. More color means more extreme. Triangle is 1, half-full cell is 2,
+      <dd>Empty cell is 0. Blue is positive; red, negative. More color means more extreme. Triangle is 1, half-full cell is 2,
          mostly-full cell is 3, full cell is 4.</dd>
-      <dt>Right cell is Resources (think "what's in the ground")</dt>
+      <dt>Right cell is Resources (think "ground (what's in it)")</dt>
       <dd>As for Environment, but gold is positive, grey is negative.</dd>
       <dt>Hashmarks above/below double square is Technology</dt>
       <dd>Above is positive, below is negative (no hashmarks means T0). One dashed line is level 1, two dashed is 2, solid and
@@ -33,15 +33,41 @@
       On the "Params" tab, enter the number of star systems in your cluster and hit the "Go!" button.
    </p>
 
-   <h3>Save a Cluster</h3>
+   <h3>Log in to access the database</h3>
 
    <p>
-      To save your cluster to the cloud (sharing will be implemented later), you'll need to log in on the "Session" tab. Currently,
+      To access clusters in the cloud (sharing will be implemented later), you'll need to log in on the "Session" tab. Currently,
       only Google logins are allowed (more will be implemented later).
    </p>
 
+   <p>The rest of this is probably more than you want to know about an irritating login glitch.</p>
+   
    <p>
-      Once you're logged on, again, on the "Session" tab, enter a name for the cluster and hit "Save"
+      Logging in works but is a bit glitchy at the moment, because the UI might not accurately update to reflect the
+      fact that you're logged in.  Your current user id <em>should</em> be displayed next to the "Login" button, but I
+      guess I'm Doing It Wrong, because another UI update cycle (such as that triggered by generating a new cluster)
+      is required for the Session tab UI to properly update.
+</p><p>
+      To verify that you're logged in, if you have previously saved clusters, once you're logged in, you should see them
+      on the "Params" tab.  (Alternatively, you can generate a new cluster and look again at the "Session" tab, where you
+      should see your user id.  If you already generated a spectacularly awesome cluster and you want to preserve it (a
+      sketchy proposition, given that this is alpha software), see XML section below.)
+</p><p>
+      If you hit "Login", and you get a prompt to enter your password (or pick a user id
+      and then enter a password), you're almost certainly in, even though the UI might not update properly.
+</p><p>
+      For the Google login, if you're logged in to Google on another web page, the login process here should
+      automatically pick that up (when you hit the "Login" button).
+</p><p>
+      Once you're
+      logged in, you stay logged in, even between sessions, until you hit the "Logout" button.
+
+   </p>
+
+   <h3>Save a Cluster</h3>
+
+   <p>
+      If you're logged in, on the "Session" tab, enter a name for the cluster and hit "Save"
    </p>
 
    <h4>XML</h4>
@@ -49,6 +75,11 @@
    <p>
       Note that there is also the possibility of extracting the cluster as XML, possibly for use in another cluster-generation
       system. See the "XML" tab.
+   </p>
+
+   <p>
+     When you have a great cluster and you're not sure you're logged in and you don't want to lose your cluster, save
+     the XML.  Then, when you get logged in, you can paste your saved XML back into the XML box and blithely continue.
    </p>
 
    <h3>Load An Existing Cluster</h3>
