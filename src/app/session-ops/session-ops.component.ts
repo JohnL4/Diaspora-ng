@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Observable } from 'rxjs/Rx';
 
 import { UUIDv4 } from 'uuid-version4';
 
@@ -13,7 +14,7 @@ import { User } from '../user';
 })
 export class SessionOpsComponent implements OnInit
 {
-   public get user(): User { return this._persistenceSvc.currentUser; }
+   public get user(): Observable<User> { return this._persistenceSvc.currentUser; }
    public uuid: string;
       
    private get cluster(): Cluster { return this._persistenceSvc.currentClusterSubject.value; }

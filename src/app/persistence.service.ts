@@ -27,7 +27,7 @@ export class PersistenceService
    /**
     * Current User; may be null.
     */
-   public get currentUser(): User { return this._curUser.value; }
+   public get currentUser(): BehaviorSubject<User> { return this._curUser; }
 
    /**
     * The current cluster (which may not have been saved yet), as a Subject.
@@ -267,7 +267,7 @@ export class PersistenceService
     */
    public deleteCluster(aUniqueName: string): void
    {
-      if (!this.currentUser)
+      if (!this.currentUser.value)
          return;
       const me = this.constructor.name + '.deleteCluster(): ';
       // const uniqueName = encodeURIComponent( aUniqueName);
@@ -282,7 +282,7 @@ export class PersistenceService
       if (!this._db) this._db = firebase.database();
 
       const updates = Object.create( null);
-      updates[`/users/${this.currentUser.uid}/clusters/${aUniqueName}`] = null;
+      updates[`/users/${this.currentUser.value.uid}/clusters/${aUniqueName}`] = null;
       updates[`/clusters/${aUniqueName}`] = null;
       updates[`/clusterData/${aUniqueName}`] = null;
 
@@ -291,26 +291,26 @@ export class PersistenceService
    
    public saveCluster( aCluster: Cluster): void
    {
-      // let uniqueName = JSON.stringify( minimalEncode( uniqueClusterName( aCluster, this.currentUser)));
-      // const uniqueName = encodeURIComponent( uniqueClusterName( aCluster, this.currentUser));
+      // let uniqueName = JSON.stringify( minimalEncode( uniqueClusterName( aCluster, this.currentUser.value)));
+      // const uniqueName = encodeURIComponent( uniqueClusterName( aCluster, this.currentUser.value));
       let uniqueName: string;
       if (aCluster.uid)
          uniqueName = aCluster.uid;
       else
       {
-         uniqueName = uniqueClusterName( aCluster, this.currentUser);
+         uniqueName = uniqueClusterName( aCluster, this.currentUser.value);
          aCluster.uid = uniqueName; // Assumed to be a straight UUId.
       }
       const dbRef = this._db.ref();
       const updates = Object.create( null);
 
       // Clusters visible to current user: this one that we're saving, for sure.
-      updates[`/users/${this.currentUser.uid}/clusters/${aCluster.uid}`] = true;
+      updates[`/users/${this.currentUser.value.uid}/clusters/${aCluster.uid}`] = true;
 
       // Metadata
       const clusterProps = { 
             name: aCluster.name, 
-            lastAuthor: this.currentUser.uid,
+            lastAuthor: this.currentUser.value.uid,
             lastChanged: new Date( Date.now()), 
             notes: aCluster.notes ? aCluster.notes : ''
       };
@@ -320,7 +320,7 @@ export class PersistenceService
       this._xmlSerializer.cluster = aCluster;
       const xml = this._xmlSerializer.serialize();
       const owners = Object.create( null); // TODO: do we need this?
-      owners[ `${this.currentUser.uid}`] = 1;
+      owners[ `${this.currentUser.value.uid}`] = 1;
       const clusterDataProps = { xml: xml,
                                owners: owners
                              };

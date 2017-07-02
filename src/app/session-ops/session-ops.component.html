@@ -43,11 +43,11 @@
   <div class="col-sm-1">
     <p><button class="btn btn-default" type="button" (click)="login()">Login</button></p>
   </div>
-  <div class="col-sm-5" *ngIf="user">
+  <div class="col-sm-5" *ngIf="user | async">
     <!-- Refreshed as a result of the fact that ClusterPersistenceService.user is a promise. -->
-    <p>Currently logged in as {{user.name}} (uid {{user.uid}}).</p> 
+    <p>Currently logged in as {{(user | async).name}} (uid {{(user | async).uid}}).</p> 
   </div>
-  <div class="col-sm-5" *ngIf="! user">
+  <div class="col-sm-5" *ngIf="! (user | async)">
      <p>Currently not logged in, but I wouldn't believe me if I were you.</p>
   </div>
 </div>
