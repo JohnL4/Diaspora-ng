@@ -48,7 +48,18 @@
     <p>Currently logged in as {{(user | async).name}} (uid {{(user | async).uid}}).</p> 
   </div>
   <div class="col-sm-5" *ngIf="! (user | async)">
-     <p>Currently not logged in, but I wouldn't believe me if I were you.</p>
+     <p>
+        Currently not logged in.
+        <a href="#" (click)="showDelayedObservableInfo()"><span class="glyphicon glyphicon-info-sign"></span></a>
+     </p>
+     <p *ngIf="delayedObservableInfoShowing">
+        Sometimes, due to either a bug in Angular or RxJS or my incorrect usage of same, the UI doesn't properly update
+        to show state that might be changing asynchronously (and logging in/out is actually done asynchronously, as is
+        almost every operation requiring some network traffic).  In such cases, the application is in the correct state
+        (unless there's yet another bug in my code; entirely possible) but the UI doesn't show it.  Some sort of UI-changing
+        action will clear it up (for example, generating a new cluster, loading a cluster, saving a cluster, editing a cluster, etc.).
+        You should be able to proceed normally.
+     </p>
   </div>
 </div>
 <div class="row">

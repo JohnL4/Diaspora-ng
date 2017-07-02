@@ -17,7 +17,6 @@ export class SessionOpsComponent implements OnInit
    public get user(): Observable<User> { return this._persistenceSvc.currentUser; }
    public uuid: string;
       
-   private get cluster(): Cluster { return this._persistenceSvc.currentClusterSubject.value; }
    public get clusterName(): string { return this.cluster.name};
    public set clusterName( aName: string)
    {
@@ -40,9 +39,15 @@ export class SessionOpsComponent implements OnInit
    //       });
    // }
 
+   public delayedObservableInfoShowing: boolean = false;
+
+   private get cluster(): Cluster { return this._persistenceSvc.currentClusterSubject.value; }
+   
    // -------------------------------------------------  constructors  -------------------------------------------------
 
    constructor( /* private _cluster: Cluster, */ private _persistenceSvc: PersistenceService) { }
+
+   // ---------------------------------------------------  methods  ----------------------------------------------------
 
    ngOnInit()
    {
@@ -73,5 +78,11 @@ export class SessionOpsComponent implements OnInit
    public saveCluster()
    {
       this._persistenceSvc.saveCluster( this.cluster);
+   }
+
+   public showDelayedObservableInfo(): boolean
+   {
+      this.delayedObservableInfoShowing = ! this.delayedObservableInfoShowing;
+      return false; // Prevent UI from taking this as an operation of some sort and refreshing.
    }
 }
