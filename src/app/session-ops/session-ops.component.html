@@ -36,6 +36,8 @@
 -->
 <p></p>
 
+<!-- ===============================================  Text, Status  ===============================================- -->
+
 <div class="row">
    <div class="col-sm-12" *ngIf="(user | async); else notLoggedIn">
       <!-- Refreshed as a result of the fact that ClusterPersistenceService.user is a promise. -->
@@ -65,38 +67,90 @@
    </div>
 </div>
 
-<div class="row">
-   <div class="col-sm-12">
+<!-- =================================================  Controls  =================================================- -->
+
+<form class="form-horizontal">
+
+<div class="form-group">
+   <div class="col-sm-1">
       <p><button class="btn btn-default" type="button" (click)="loginWithGoogle()">Login With Google</button></p>
    </div>
 </div>
 
-<div class="row">
-   <div class="col-sm-12">
+<div class="form-group">
+   <div class="col-sm-1">
       <p>
-         <button class="btn btn-default" type="button" (click)="loginWithEmail()">Login With Email</button>
-         <button class="btn btn-default" type="button" (click)="createNewUserWithEmail()">Create New User With Email</button>
+         <button class="btn btn-default" type="button" (click)="startLoginWithEmail()">Login With Email</button>
       </p>
    </div>
+   <!--
+   <div class="col-sm-2">
+      <p>
+         <button class="btn btn-default" type="button" (click)="createNewUserWithEmail()">Create New Account With Email</button>
+      </p>
+   </div>
+   -->
 </div>
 
-<div class="row">
-  <div class="col-sm-12">
+<ng-container *ngIf="loggingInWithEmail">
+   <div class="form-group">
+      <div class="col-sm-1 col-sm-offset-1 control-label">
+         <label for="userEmail">Email:</label>
+      </div>
+      <div class="col-sm-3">
+         <input name="userEmail" [(ngModel)]="userEmail" type="email" class="form-control" />
+      </div>
+      <label for="emailPassword" class="col-sm-1 control-label">
+            Password:
+         </label>
+      <div class="col-sm-3">
+         <input name="emailPassword" [(ngModel)]="emailPassword" type="password" class="form-control" />
+      </div>
+      <div class="col-sm-3 checkbox">
+         <label>
+         <input name="isNewEmailAccount" type="checkbox" [(ngModel)]="isNewEmailAccount"/>
+         Create new account
+         </label>
+      </div>
+   </div>
+   <div class="form-group" *ngIf="isNewEmailAccount">
+      <div class="col-sm-4 col-sm-offset-1">
+         <p>Since you're creating a new account, let's make sure you didn't fat-finger your password by making you type it again:
+         </p>
+      </div>
+      <label for="emailPassword2" class="col-sm-1 control-label">
+         Password:
+      </label>
+      <div class="col-sm-3">
+      <input name="emailPassword2" type="password" [(ngModel)]="emailPassword2" class="form-control" />
+      </div>
+   </div>
+   <div class="form-group">
+      <div class="col-sm-2 col-sm-offset-1">
+         <button class="btn btn-default" type="button" (click)="loginWithEmail()">Log in</button>
+      </div>
+   </div>
+</ng-container>
+
+<div class="form-group">
+  <div class="col-sm-2">
     <p><button class="btn btn-default" type="button" (click)="logout()">Logout</button></p>
   </div>
 </div>
 
-<div class="row">
-   <div class="col-sm-12">
+<div class="form-group">
+   <div class="col-sm-1">
       <p>
          <button class="btn btn-default" type="button" (click)="saveCluster()">Save Cluster</button>
-         as
-         <input name="clusterName" type="text" size="40" [(ngModel)]="clusterName" />
       </p>
+   </div>
+   <label for="clusterName" class="col-sm-1 text-right">as</label>
+   <div class="col-sm-3">
+         <input name="clusterName" type="text" size="40" [(ngModel)]="clusterName" class="form-control"/>
    </div>
 </div>
 
-<div class="row">
+<div class="form-group">
       <p class="col-sm-11 col-sm-offset-1">
          (Note that there is currently no way to make a copy of a cluster under a different name, as you might expect
          from a "Save As" operation.  Instead, you'll wind up changing the name of the current cluster, not generating
@@ -104,8 +158,10 @@
       </p>
 </div>
 
+</form>
+
 <!--
-<div class="row">
+<div class="form-group">
   <div class="col-sm-3">
     <p>Some random UUID:</p>
   </div>
