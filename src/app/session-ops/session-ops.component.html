@@ -113,18 +113,31 @@
          </label>
       </div>
    </div>
-   <div class="form-group" *ngIf="isNewEmailAccount">
-      <div class="col-sm-4 col-sm-offset-1">
-         <p>Since you're creating a new account, let's make sure you didn't fat-finger your password by making you type it again:
+   <ng-container *ngIf="isNewEmailAccount">
+      <div class="form-group">
+         <p class="col-sm-4 col-sm-offset-1">Since you're creating a new account, let's make sure you didn't fat-finger your password by making you type it again:
          </p>
-      </div>
-      <label for="emailPassword2" class="col-sm-1 control-label">
+         <label for="emailPassword2" class="col-sm-1 control-label">
          Password:
       </label>
-      <div class="col-sm-3">
-      <input name="emailPassword2" type="password" [(ngModel)]="emailPassword2" class="form-control" />
+         <div class="col-sm-3">
+            <input name="emailPassword2" [(ngModel)]="emailPassword2" type="password" class="form-control" />
+         </div>
       </div>
-   </div>
+      <div class="form-group">
+         <p class="col-sm-4 col-sm-offset-1">
+            Also, you need publicly-visible name, which can be your actual name or the kind of user id a 13-year-old would come up with,
+            like <span style="white-space: nowrap;">"__--¯¯so0per sp1ffy¯¯--__"</span>. Whatever.
+         </p>
+         <label for="emailUserName" class="col-sm-1 control-label">
+         User&nbsp;name:
+      </label>
+         <div class="col-sm-3">
+            <input name="emailUserName" [(ngModel)]="emailUserName" type="text" class="form-control" />
+         </div>
+      </div>
+   </ng-container>
+
    <div class="form-group">
       <div class="col-sm-2 col-sm-offset-1">
          <button class="btn btn-default" type="button" (click)="loginWithEmail()">Log in</button>
