@@ -57,12 +57,22 @@ export class SessionOpsComponent implements OnInit
       this.uuid = UUIDv4.generateUUID();
    }
 
-   public login()
+   public loginWithGoogle()
    {
       let me = this.constructor.name + ".login(): ";
       console.log( me + "logging in");
       this._persistenceSvc.login();
       // alert( me + 'done');
+   }
+
+   public loginWithEmail()
+   {
+
+   }
+
+   public createNewUserWithEmail()
+   {
+      
    }
 
    public logout()
