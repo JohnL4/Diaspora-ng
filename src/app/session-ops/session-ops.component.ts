@@ -31,6 +31,12 @@ export class SessionOpsComponent implements OnInit
    public userEmail: string;
    public emailPassword: string;
    public emailPassword2: string;
+   public emailUserName: string;
+
+   public get loginFailures(): Observable<Error> 
+   {
+      return this._persistenceSvc.loginFailures;
+   }
    
    // private getUser(): void
    // {
@@ -79,11 +85,23 @@ export class SessionOpsComponent implements OnInit
    public loginWithEmail(): void
    {
       const me = this.constructor.name + 'loginWithEmail(): ';
-      console.log( me 
+      console.log(me
          + `Logging in w/email acct ${this.userEmail}, password ${this.emailPassword} ${this.isNewEmailAccount ? '(new account)' : ''}`);
+      if (this.isNewEmailAccount)
+      {
+         if (this.emailPassword === this.emailPassword2)
+         {
+            this._persistenceSvc.createUserWithEmailAndPassword(this.userEmail, this.emailPassword, this.emailUserName);
+         }
+      }
+      else
+      {
+         this._persistenceSvc.signInWithEmailAndPassword(this.userEmail, this.emailPassword);
+      }
       this.loggingInWithEmail = false;
    }
 
+   // TODO: delete
    public createNewUserWithEmail()
    {
       

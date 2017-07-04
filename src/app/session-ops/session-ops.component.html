@@ -38,6 +38,14 @@
 
 <!-- ===============================================  Text, Status  ===============================================- -->
 
+<div class="row" *ngIf="(loginFailures | async) as loginFailure">
+   <div class="col-sm-12">
+      <p class="alert alert-danger">
+         {{loginFailure.name}}: {{loginFailure.message}}
+      </p>
+   </div>
+</div>
+
 <div class="row">
    <div class="col-sm-12" *ngIf="(user | async); else notLoggedIn">
       <!-- Refreshed as a result of the fact that ClusterPersistenceService.user is a promise. -->
@@ -115,6 +123,24 @@
    </div>
    <ng-container *ngIf="isNewEmailAccount">
       <div class="form-group">
+         <div class="col-sm-11 col-sm-offset-1">
+            <p>Ok, new account. A few caveats here:</p>
+            <ol>
+               <li>There is no (as of yet) password-recovery mechanism. <em>Don't forget your password.</em></li>
+               <li>My app sees your password. <em>Don't use a valuable password</em>                  
+                  (or, really, any password you've already used somewhere else). I'm an honorable guy, but, still....</li>
+               <li>If you're paranoid about email addresses, just use some made-up address. I don't verify it (yet), and since there's
+                  no password recovery mechanism (well, there is, but it requires manual intervention from the Firebase
+                  admin console), it won't make a difference.</li>
+               <li>Google Firebase has some rudimentary password requirements, and one of them is that the password must be at
+                  least six characters long.</li>
+            </ol>
+            <p>I suppose another thing for me to investigate, at some point, is an external authentication service like Auth0.
+               Until I get on-board with that, expect Mickey-Mouse-ness here (it's just a stupid cluster-generating app, anyway).
+            </p>
+         </div>
+      </div>
+      <div class="form-group">
          <p class="col-sm-4 col-sm-offset-1">Since you're creating a new account, let's make sure you didn't fat-finger your password by making you type it again:
          </p>
          <label for="emailPassword2" class="col-sm-1 control-label">
@@ -126,8 +152,8 @@
       </div>
       <div class="form-group">
          <p class="col-sm-4 col-sm-offset-1">
-            Also, you need publicly-visible name, which can be your actual name or the kind of user id a 13-year-old would come up with,
-            like <span style="white-space: nowrap;">"__--¯¯so0per sp1ffy¯¯--__"</span>. Whatever.
+            Also, you need a publicly-visible name, which can be your actual name or the kind of user id a 13-year-old
+            would come up with, like <span style="white-space: nowrap;">"__--¯¯so0per sp1ffy¯¯--__"</span>. Whatever.
          </p>
          <label for="emailUserName" class="col-sm-1 control-label">
          User&nbsp;name:
@@ -157,9 +183,9 @@
          <button class="btn btn-default" type="button" (click)="saveCluster()">Save Cluster</button>
       </p>
    </div>
-   <label for="clusterName" class="col-sm-1 text-right">as</label>
-   <div class="col-sm-3">
-         <input name="clusterName" type="text" size="40" [(ngModel)]="clusterName" class="form-control"/>
+   <label for="clusterName" class="col-sm-1 control-label">as</label>
+   <div class="col-sm-4">
+         <input name="clusterName" type="text"  [(ngModel)]="clusterName" class="form-control"/>
    </div>
 </div>
 

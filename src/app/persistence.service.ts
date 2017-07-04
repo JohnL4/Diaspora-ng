@@ -24,6 +24,8 @@ export class PersistenceService
 {
    // --------------------------------------------  Public Data, Accessors  --------------------------------------------
    
+   public get loginFailures(): Observable<Error> { return this._loginFailures; }
+
    /**
     * Current User; may be null.
     */
@@ -86,6 +88,16 @@ export class PersistenceService
    private _db: firebase.database.Database;
    private _authProvider: firebase.auth.GoogleAuthProvider;
    private _googleAccessToken: firebase.auth.AuthCredential;
+
+   /**
+    * Temporary holder for data used in creating a new email user, will be purged upon successful authentication.
+    */
+   private _emailUser: User;
+
+   /**
+    * Sequence of login failures, as time goes by.
+    */
+   private _loginFailures = new BehaviorSubject<Error>( null);
 
    // private _userPromise: Promise<User>;
 
@@ -209,6 +221,31 @@ export class PersistenceService
    public login(): void
    {
       this._loginWithPopup();
+   }
+
+   /**
+    * Creates a new user account having the given email address and password.
+    * @param anEmail 
+    * @param aPassword 
+    */
+   public createUserWithEmailAndPassword(anEmail: string, aPassword: string, aUserName: string): void
+   {
+      const me = this.constructor.name + '.createUserWithEmailAndPassword(): ';
+      this._emailUser = new User(null, aUserName, anEmail, null);
+      firebase.auth().createUserWithEmailAndPassword(anEmail, aPassword)
+         .catch( this._raiseLoginError.bind( this));
+   }
+
+   /**
+    * Signs in to the user account having the given email address, using the given password.
+    * @param anEmail 
+    * @param aPassword 
+    */
+   public signInWithEmailAndPassword(anEmail: string, aPassword: string): void
+   {
+      const me = this.constructor.name + '.signInWithEmailAndPassword(): ';
+      firebase.auth().signInWithEmailAndPassword(anEmail, aPassword)
+         .catch( this._raiseLoginError.bind( this));
    }
 
    public logout()
@@ -386,7 +423,16 @@ export class PersistenceService
       console.log( me + 'done');
    }
 
-   private authStateChanged( aFirebaseUser): void
+   private _raiseLoginError( anErrorObj: any): void
+   {
+      const me = this.constructor.name + '._raiseLoginError(): ';
+      console.log(me + `Error siging in: ${anErrorObj.code}: ${anErrorObj.message}`);
+      const newError = new Error(anErrorObj.message);
+      newError.name = anErrorObj.code;
+      this._loginFailures.next(newError);
+   }
+
+   private authStateChanged( aFirebaseUser: firebase.User): void
    {
       const me = this.constructor.name + '.authStateChanged(): ';
       // let user: User;
@@ -397,6 +443,33 @@ export class PersistenceService
                           aFirebaseUser.email,
                           new Date( Date.now()));
          console.log( me + `User logged in: ${newUser} with provider ${aFirebaseUser.providerId}`);
+         if (this._emailUser)
+         {
+            // Temp. data from creating new email user -- transfer to newUser object and purge.
+            newUser.name = this._emailUser.name;
+            this._emailUser = null;
+         }
+         else
+         {
+            if (aFirebaseUser.displayName)
+            {
+               // Do nothing -- user came in with a display name, so assume it's good.
+            }
+            else
+            {
+               newUser.isDisplayNameNeeded = true; // We don't really care about the provider id here -- if there's no display name, we need to try to get it.
+               console.log(me + `Firebase user uid ${aFirebaseUser.uid} has displayName "${aFirebaseUser.displayName}" and email ${aFirebaseUser.email}`);
+               console.log(me + '---- provider data:');
+               for (const providerData of aFirebaseUser.providerData)
+               {
+                  console.log(me + `displayName\t: ${providerData.displayName}`);
+                  console.log(me + `email\t: ${providerData.email}`);
+                  console.log(me + `photoURL\t: ${providerData.photoURL}`);
+                  console.log(me + `providerId\t: ${providerData.providerId}`);
+                  console.log(me + `uid\t: ${providerData.uid}`);
+               }
+            }
+         }
          this._curUser.next( newUser);
          if (newUser.uid)
          {
@@ -411,7 +484,14 @@ export class PersistenceService
             //                   timeZoneOffset: newUser.lastLogin.getTimezoneOffset()
             //                 };
             const updates = Object.create( null);
-            updates[`/usersPublic/${newUser.uid}`]= userPublicProps;
+            if (newUser.isDisplayNameNeeded)
+            {
+               // Do nothing -- don't overwrite whatever's in the database with whatever garbage is in the user's current display name.
+            }
+            else
+            {
+               updates[`/usersPublic/${newUser.uid}`]= userPublicProps;
+            }
             updates[`/users/${newUser.uid}/email`] = newUser.email;
             updates[`/users/${newUser.uid}/lastLogin`] = newUser.lastLogin;
             updates[`/users/${newUser.uid}/timeZoneOffset`] = newUser.lastLogin.getTimezoneOffset();
@@ -432,6 +512,7 @@ export class PersistenceService
       }
       // this._userPromiseDeferred.resolve( this._curUser); // We know _userPromiseDeferred won't be null because we create it
       //                                                 // before hooking up this event handler.
+      this._loginFailures.next( null); // Auth state changed ==> no errors.  Authentication failures will not change the auth state.
    }
 
    private authError( aFirebaseAuthError): void
@@ -503,7 +584,7 @@ export class PersistenceService
       //                                          //   subject.
 
          this._users = this.makeDatabaseSnapshotObservable( '/usersPublic').map( s => this.parseUsers( s.val()));
-         this._users.subscribe( map => {this._latestUserMap = map; });
+         this._users.subscribe( map => {this._latestUserMap = map; this.getDisplayNameFromUserMap(); });
 
          // TODO: make Behavior Subject containing cluster arrays?  Answer: YES, probably a good idea.  Then we wouldn't
          // need to bother with this "latest" junk, because a BehaviorSubject will always have the latest value.
@@ -515,6 +596,27 @@ export class PersistenceService
       }
       else
          console.log( me + 'WARNING: current user not yet initialized; cannot establish references to user-specific data');
+   }
+
+   /**
+    * If required, try to get the current user's display name from the public data map.
+    */
+   private getDisplayNameFromUserMap(): void
+   {
+      const me = this.constructor.name + '.getDisplayNameFromUserMap(): ';
+      const curUser = this._curUser ? this._curUser.value : null;
+      if (curUser && curUser.isDisplayNameNeeded)
+      {
+         const userFromPublicMap = this._latestUserMap.get( curUser.uid);
+         if (userFromPublicMap)
+         {
+            console.log( me + `Overwriting current user name (${curUser.name}) with "${userFromPublicMap.name}"`);
+            curUser.name = userFromPublicMap.name; // Overwrite whatever junk was in the current user's 'name' property (probably an email address or even a uid).
+            this._curUser.next( curUser); // Publish
+            // At this point, we really should turn off curUser.isDisplayNameNeeded, but leaving it on allows to change
+            // user display names on the fly, so what the heck.  If it becomes a performance problem, we can turn it off.
+         }
+      }
    }
 
    /**
@@ -704,6 +806,11 @@ export class PersistenceService
       return retval;
    }
 
+   /**
+    * Transforms incoming object, keyed by uid and having values from the public user info section of the d/b (e.g.,
+    * property 'name' (not 'displayName')) into User objects having the corresponding properties (and only those properties).
+    * @param aSnapshot 
+    */
    private parseUsers( aSnapshot: Object): Map<string, User> {
       const me = this.constructor.name + '.parseUsers(): ';
       const retval = new Map<string, User>();

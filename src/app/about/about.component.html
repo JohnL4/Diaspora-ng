@@ -65,31 +65,35 @@
    <h3>Log in to access the database</h3>
 
    <p>
-      To access clusters in the cloud (sharing will be implemented later), you'll need to log in on the "Session" tab. Currently,
-      only Google logins are allowed (more will be implemented later).
+      To access clusters in the cloud (sharing will be implemented later), you'll need to log in on the "Session" tab.
+      Currently, only Google and "plain" logins are implemented.  I might implement a Facebook login or a Twitter login
+      later, if there's demand.
    </p>
 
    <p>The rest of this is probably more than you want to know about an irritating login glitch.</p>
    
    <p>
-      Logging in works but is a bit glitchy at the moment, because the UI might not accurately update to reflect the
-      fact that you're logged in.  Your current user id <em>should</em> be displayed next to the "Login" button, but I
-      guess I'm Doing It Wrong, because another UI update cycle (such as that triggered by generating a new cluster)
-      is required for the Session tab UI to properly update.
-</p><p>
-      To verify that you're logged in, if you have previously saved clusters, once you're logged in, you should see them
-      on the "Params" tab.  (Alternatively, you can generate a new cluster and look again at the "Session" tab, where you
-      should see your user id.  If you already generated a spectacularly awesome cluster and you want to preserve it (a
-      sketchy proposition, given that this is alpha software), see XML section below.)
-</p><p>
-      If you hit "Login", and you get a prompt to enter your password (or pick a user id
-      and then enter a password), you're almost certainly in, even though the UI might not update properly.
-</p><p>
-      For the Google login, if you're logged in to Google on another web page, the login process here should
-      automatically pick that up (when you hit the "Login" button).
-</p><p>
-      Once you're
-      logged in, you stay logged in, even between sessions, until you hit the "Logout" button.
+      Logging in works but is a bit glitchy at the moment, because the UI might not accurately update to reflect the fact that
+      you're logged in. Your current user id <em>should</em> be displayed on the "Session" tab, but I guess I'm Doing
+      It Wrong, because another UI update cycle (such as that triggered by generating a new cluster) sometimes is required
+      for the Session tab UI to properly update.
+   </p>
+   <p>
+      In case you think you're logged in but the UI doesn't show it, to verify that you're logged in, if you have previously saved
+      clusters, you should see them on the "Params" tab. (Alternatively, you can generate a new cluster and look again at
+      the "Session" tab, where you should see your user id. If you already generated a spectacularly awesome cluster and
+      you want to preserve it (a sketchy proposition, given that this is alpha software), see XML section below.)
+   </p>
+   <p>
+      If you hit "Login", and you get a prompt to enter your password (or pick a user id and then enter a password), you're almost
+      certainly in, even though the UI might not update properly.
+   </p>
+   <p>
+      For the Google login, if you're logged in to Google on another web page, the login process here should automatically pick
+      that up (when you hit the "Login" button).
+   </p>
+   <p>
+      Once you're logged in, you stay logged in, even between sessions, until you hit the "Logout" button.
 
    </p>
 
