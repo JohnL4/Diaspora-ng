@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, Observer, BehaviorSubject, Subscription } from 'rxjs/Rx';
+import { Observable, Observer, Subject, BehaviorSubject, Subscription } from 'rxjs/Rx';
 
 import * as firebase from 'firebase';
 
@@ -24,7 +24,7 @@ export class PersistenceService
 {
    // --------------------------------------------  Public Data, Accessors  --------------------------------------------
    
-   public get loginFailures(): Observable<Error> { return this._loginFailures; }
+   public get loginFailures(): Subject<Error> { return this._loginFailures; }
 
    /**
     * Current User; may be null.
@@ -244,8 +244,27 @@ export class PersistenceService
    public signInWithEmailAndPassword(anEmail: string, aPassword: string): void
    {
       const me = this.constructor.name + '.signInWithEmailAndPassword(): ';
-      firebase.auth().signInWithEmailAndPassword(anEmail, aPassword)
+      console.log( me);
+      firebase.auth().signInWithEmailAndPassword(anEmail, aPassword ? aPassword : "")
          .catch( this._raiseLoginError.bind( this));
+   }
+
+   public sendForgottenEmailPassword(anEmailAddress: string): void
+   {
+      const me = this.constructor.name + '.sendForgottenEmailPassword(): ';
+      console.log(me + `Requesting password reset for ${anEmailAddress}`);
+      if (anEmailAddress)
+         firebase.auth().sendPasswordResetEmail(anEmailAddress).then(
+            (function (obj: any)
+            {
+               console.log(`successfully sent password reset request, result = ${obj}`);
+               // Hack to get feedback to user: raise login error.
+               this._raiseLoginError(
+                  new Error(`Sent password reset request for ${anEmailAddress}; check your spam folder.  (This is not actually an error, unless you consider forgetting your password an error.)`));
+            }).bind(this),
+            this._raiseLoginError.bind(this)); // error
+      else
+         this._raiseLoginError(new Error("You need to specify an email address if you're going to claim you forgot your password."));
    }
 
    public logout()
@@ -428,7 +447,8 @@ export class PersistenceService
       const me = this.constructor.name + '._raiseLoginError(): ';
       console.log(me + `Error siging in: ${anErrorObj.code}: ${anErrorObj.message}`);
       const newError = new Error(anErrorObj.message);
-      newError.name = anErrorObj.code;
+      if (anErrorObj.code)
+         newError.name = anErrorObj.code;
       this._loginFailures.next(newError);
    }
 

@@ -26,12 +26,40 @@ export class SessionOpsComponent implements OnInit
       // console.log( me + `JSON name: ${jsonStringifiedName}`);
    };
 
+   /**
+    * True if we are currently logging the user in with email/password.
+    */
    public loggingInWithEmail = false;
+
+   /**
+    * True if we are setting up a new user email/password account.
+    */
    public isNewEmailAccount = false;
+
+   /**
+    * The email the user wants to log in with or create.
+    */
    public userEmail: string;
+
+   /**
+    * The password the user will use to authenticate with, when the user id is an email address.
+    */
    public emailPassword: string;
+
+   /**
+    * Duplication password entry for validation when creating a new email-identified account.
+    */
    public emailPassword2: string;
+
+   /**
+    * The publicly-visible user id the user wants for their account, when creating an account identified with an email address.
+    */
    public emailUserName: string;
+
+   /**
+    * True if the user forgot their password and we requested the authentication service to respond.
+    */
+   public isForgottenPasswordSent = false;
 
    public get loginFailures(): Observable<Error> 
    {
@@ -84,7 +112,7 @@ export class SessionOpsComponent implements OnInit
 
    public loginWithEmail(): void
    {
-      const me = this.constructor.name + 'loginWithEmail(): ';
+      const me = this.constructor.name + '.loginWithEmail(): ';
       console.log(me
          + `Logging in w/email acct ${this.userEmail}, password ${this.emailPassword} ${this.isNewEmailAccount ? '(new account)' : ''}`);
       if (this.isNewEmailAccount)
@@ -101,10 +129,10 @@ export class SessionOpsComponent implements OnInit
       this.loggingInWithEmail = false;
    }
 
-   // TODO: delete
-   public createNewUserWithEmail()
+   public forgotPassword(): void
    {
-      
+      this._persistenceSvc.sendForgottenEmailPassword( this.userEmail);
+      this.isForgottenPasswordSent = true;
    }
 
    public logout()
@@ -115,6 +143,11 @@ export class SessionOpsComponent implements OnInit
       //                           // already been resolved, and promises are one-time-only events, and (2) we already know
       //                           // what the outcome of this call will be.
       this._persistenceSvc.logout();
+   }
+
+   public clearLoginError(): void
+   {
+      this._persistenceSvc.loginFailures.next( null);
    }
 
    public saveCluster()

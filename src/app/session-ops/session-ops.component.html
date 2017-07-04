@@ -1,48 +1,15 @@
 <p></p>
 
-<!-- Observable play -->
-<!--
-<div class="row">
-  <div class="col-sm-1">Observables:</div>
-  <div class="col-sm-11">
-    {{_persistenceSvc.observableItem | async}}
-<!--
-    <ul>
-      <li *ngFor="let item of _persistenceSvc.observableItems | async">{{item}}</li>
-    </ul>
--->
-<!--
-  </div>
-</div>
-
-<p></p>
--->
-
-<!-- More Observable play -->
-<!--
-<div class="row">
-  <div class="col-sm-1">Clusters:</div>
-  <div class="col-sm-11">
-    <!-- <p>{{(_persistenceSvc.clusterNamesObservable | async)?.val()}}</p> -->
-<!--
-    <ul>
-      <!-- When clusterNamesObservable is FromEventPatternObservable<{},{}>, the following fails with "cannot find
-        differ supporting object" or some such. -->
-<!--
-      <li *ngFor="let clusterName of (_persistenceSvc.clusterNamesObservable | async)?.val()">{{clusterName}}</li>
-    </ul>
-  </div>
-</div>
--->
-<p></p>
-
 <!-- ===============================================  Text, Status  ===============================================- -->
 
 <div class="row" *ngIf="(loginFailures | async) as loginFailure">
-   <div class="col-sm-12">
+   <div class="col-sm-11">
       <p class="alert alert-danger">
-         {{loginFailure.name}}: {{loginFailure.message}}
+         <span *ngIf="loginFailure.name">{{loginFailure.name}}: </span>{{loginFailure.message}}
       </p>
+   </div>
+   <div class="col-sm-1">
+      <button type="button" class="btn btn-default" (click)="clearLoginError()">Clear</button>
    </div>
 </div>
 
@@ -75,6 +42,7 @@
    </div>
 </div>
 
+
 <!-- =================================================  Controls  =================================================- -->
 
 <form class="form-horizontal">
@@ -85,12 +53,15 @@
    </div>
 </div>
 
-<div class="form-group">
-   <div class="col-sm-1">
+<div class="panel panel-default">
+   <div class="panel-heading">Or login with email and password:</div>
+   <div class="panel-body">
+<!--<div class="form-group">-->
+   <!--<div class="col-sm-1">
       <p>
          <button class="btn btn-default" type="button" (click)="startLoginWithEmail()">Login With Email</button>
       </p>
-   </div>
+   </div>-->
    <!--
    <div class="col-sm-2">
       <p>
@@ -98,9 +69,9 @@
       </p>
    </div>
    -->
-</div>
+<!--</div>-->
 
-<ng-container *ngIf="loggingInWithEmail">
+<!--<ng-container *ngIf="loggingInWithEmail">-->
    <div class="form-group">
       <div class="col-sm-1 col-sm-offset-1 control-label">
          <label for="userEmail">Email:</label>
@@ -126,18 +97,12 @@
          <div class="col-sm-11 col-sm-offset-1">
             <p>Ok, new account. A few caveats here:</p>
             <ol>
-               <li>There is no (as of yet) password-recovery mechanism. <em>Don't forget your password.</em></li>
                <li>My app sees your password. <em>Don't use a valuable password</em>                  
                   (or, really, any password you've already used somewhere else). I'm an honorable guy, but, still....</li>
-               <li>If you're paranoid about email addresses, just use some made-up address. I don't verify it (yet), and since there's
-                  no password recovery mechanism (well, there is, but it requires manual intervention from the Firebase
-                  admin console), it won't make a difference.</li>
+               <li>If you're paranoid about email addresses, just use some made-up address. I don't verify it (yet).</li>
                <li>Google Firebase has some rudimentary password requirements, and one of them is that the password must be at
                   least six characters long.</li>
             </ol>
-            <p>I suppose another thing for me to investigate, at some point, is an external authentication service like Auth0.
-               Until I get on-board with that, expect Mickey-Mouse-ness here (it's just a stupid cluster-generating app, anyway).
-            </p>
          </div>
       </div>
       <div class="form-group">
@@ -168,9 +133,26 @@
       <div class="col-sm-2 col-sm-offset-1">
          <button class="btn btn-default" type="button" (click)="loginWithEmail()">Log in</button>
       </div>
+      <div class="col-sm-3"></div>
+      <div class="col-sm-3">
+         <button class="btn btn-default" type="button" (click)="forgotPassword()">
+            I, uh... forgot my password
+         </button>
+      </div>
    </div>
-</ng-container>
 
+   <div class="form-group" *ngIf="isForgottenPasswordSent">
+      <div class="col-sm-6 col-sm-offset-6">
+         <p>
+            Ok, we're informing the authentication service.
+         </p>
+      </div>
+   </div>
+
+<!--</ng-container>-->
+   </div> <!-- panel-body -->
+</div> <!-- panel -->
+   
 <div class="form-group">
   <div class="col-sm-2">
     <p><button class="btn btn-default" type="button" (click)="logout()">Logout</button></p>
