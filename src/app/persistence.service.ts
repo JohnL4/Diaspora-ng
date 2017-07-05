@@ -405,19 +405,19 @@ export class PersistenceService
       firebase.auth().signInWithPopup( this._authProvider).then(function (result)
       {
          // This gives you a Google Access Token. You can use it to access the Google API.
-         var token = result.credential.accessToken;
+         const token = result.credential.accessToken;
          // The signed-in user info.
-         var user = result.user;
+         const user = result.user;
          // ...
       }).catch(function (error: any)
       {
          // Handle Errors here.
-         var errorCode = error.code;
-         var errorMessage = error.message;
+         const errorCode = error.code;
+         const errorMessage = error.message;
          // The email of the user's account used.
-         var email = error.email;
+         const email = error.email;
          // The firebase.auth.AuthCredential type that was used.
-         var credential = error.credential;
+         const credential = error.credential;
          alert( me + `Error: code = ${errorCode}; msg = ${errorMessage}\nemail = ${email}; credential = ${credential}`);
       });
    }
@@ -440,7 +440,7 @@ export class PersistenceService
          console.log( me + `logged in user "${this._user}"`);
          // alert( "login done");
       }).bind( this)).catch( (function( error: Error) {
-         console.log( `${me} ${error.message}`)}).bind( this));
+         console.log( `${me} ${error.message}`); }).bind( this));
       console.log( me + 'done');
    }
 
@@ -479,8 +479,10 @@ export class PersistenceService
             }
             else
             {
-               newUser.isDisplayNameNeeded = true; // We don't really care about the provider id here -- if there's no display name, we need to try to get it.
-               console.log(me + `Firebase user uid ${aFirebaseUser.uid} has displayName "${aFirebaseUser.displayName}" and email ${aFirebaseUser.email}`);
+               // We don't really care about the provider id here -- if there's no display name, we need to try to get it.
+               newUser.isDisplayNameNeeded = true; 
+               console.log(me + 
+                  `Firebase user uid ${aFirebaseUser.uid} has displayName "${aFirebaseUser.displayName}" and email ${aFirebaseUser.email}`);
                console.log(me + '---- provider data:');
                for (const providerData of aFirebaseUser.providerData)
                {
@@ -499,7 +501,7 @@ export class PersistenceService
             const dbRef = this._db.ref();
             console.log( me + `dbRef = ${dbRef}`);
             // userPublicProps: publicly-readable data for a user
-            const userPublicProps = { name: newUser.name }
+            const userPublicProps = { name: newUser.name };
             // userProps: private data for a user.
             // const userProps = { email: newUser.email,
             //                   lastLogin: newUser.lastLogin.toISOString(),
@@ -512,7 +514,7 @@ export class PersistenceService
             }
             else
             {
-               updates[`/usersPublic/${newUser.uid}`]= userPublicProps;
+               updates[`/usersPublic/${newUser.uid}`] = userPublicProps;
             }
             updates[`/users/${newUser.uid}/email`] = newUser.email;
             updates[`/users/${newUser.uid}/lastLogin`] = newUser.lastLogin;
@@ -633,7 +635,8 @@ export class PersistenceService
          if (userFromPublicMap)
          {
             console.log( me + `Overwriting current user name (${curUser.name}) with "${userFromPublicMap.name}"`);
-            curUser.name = userFromPublicMap.name; // Overwrite whatever junk was in the current user's 'name' property (probably an email address or even a uid).
+            // Overwrite whatever junk was in the current user's 'name' property (probably an email address or even a uid).
+            curUser.name = userFromPublicMap.name; 
             this._curUser.next( curUser); // Publish
             // At this point, we really should turn off curUser.isDisplayNameNeeded, but leaving it on allows to change
             // user display names on the fly, so what the heck.  If it becomes a performance problem, we can turn it off.
