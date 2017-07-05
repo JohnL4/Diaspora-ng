@@ -245,7 +245,7 @@ export class PersistenceService
    {
       const me = this.constructor.name + '.signInWithEmailAndPassword(): ';
       console.log( me);
-      firebase.auth().signInWithEmailAndPassword(anEmail, aPassword ? aPassword : "")
+      firebase.auth().signInWithEmailAndPassword(anEmail, aPassword ? aPassword : '')
          .catch( this._raiseLoginError.bind( this));
    }
 
@@ -260,11 +260,13 @@ export class PersistenceService
                console.log(`successfully sent password reset request, result = ${obj}`);
                // Hack to get feedback to user: raise login error.
                this._raiseLoginError(
-                  new Error(`Sent password reset request for ${anEmailAddress}; check your spam folder.  (This is not actually an error, unless you consider forgetting your password an error.)`));
+                  new Error(`Sent password reset email to ${anEmailAddress}; check your spam folder.  
+                     (This is not actually an error, unless you consider forgetting your password an error.)`));
             }).bind(this),
             this._raiseLoginError.bind(this)); // error
       else
-         this._raiseLoginError(new Error("You need to specify an email address if you're going to claim you forgot your password."));
+         this._raiseLoginError(new Error(
+            'You need to specify an email address so we know where to send a password reset email.'));
    }
 
    public logout()
