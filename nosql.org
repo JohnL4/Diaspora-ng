@@ -74,9 +74,12 @@
 
 ****** Current
       
-      - users
-      - clusters
-      - clusterData
+      - users :: private user data, like email addresses
+      - usersPublic :: public user data, like usernames (*NOTE:* This was added (see below) and is
+           now "current").
+      - clusters :: metadata, like who last edited and when (and cluster names and notes, which,
+           btw, should be part of the XML, too).
+      - clusterData :: XML and other data too expensive to return all at once as part of clusters.
 
 ****** Requirements (or Operations and Governing Rules)
 
@@ -152,20 +155,21 @@
            - name
        - clusters (metadata)
          - $clusterUuid
-           - (various metadata) (name, last editor, write time, notes)
+           - ".read": /clusters/$clusterUuid/viewers.contains($uid) # For cluster (meta-)data
+           - metadata
+             - ".write": /clusters/$clusterUuid/editors.contains($uid) # For cluster (meta-)data
+             - (various metadata) (name, last editor, write time, notes)
            - owners
              - $userUid: true
            - editors
              - $userUid: true
            - viewers
              - $userUid: true
-           - ".read": /clusters/$clusterUuid/viewers.contains($uid) # For cluster (meta-)data
-           - ".write": /clusters/$clusterUuid/editors.contains($uid) # For cluster (meta-)data
        - clusterData
          - $clusterUuid
            - xml
 
-*** Use
+*** Use, for creating/deleting clusters by a single user
 
     Need to cover two cases:
 
@@ -173,9 +177,9 @@
     - persisted cluster (deep link via url parameterization that causes cluster to be loaded as
       observable)
 
-**** Algorithms
+**** Algorithms for simple insertion/deletion of clusters
 
-***** Get list of available cluster id from /users/$uid node
+***** Get list of available cluster id from /users/$uid node and manage insertion/deletion on list
 
       Event: list updated.  This is either a delete or an insert; no other ops are possible (e.g.,
       data updates, list re-orderings will not generate events here).
@@ -184,8 +188,8 @@
 
 ****** Insert
 
-       No immediate response.  Insert into uuid-to-cluster map.  Subscribe to data changes on new
-       cluster, which will be handled later (see below).
+       No immediate response.  Insert into uuid-to-cluster map (and raise "next map" event?).
+       Subscribe to data changes on new cluster, which will be handled later (see below).
 
 ****** Delete
 
@@ -214,6 +218,34 @@
 **** Persisted Cluster
 
      Make svc.currentCluster observable, hook it up to firebase (UN-hook first).
+*** Use, for sharing clusters between users
+
+    The problem is only the current user can update data in their node, so another user can't just
+    insert a new cluster uid into their node.
+
+    Maybe there could be a publicly-writable node at /usersPublic/$uid/incomingClusters?  (Or
+    ../sharedClusters?)  *Answer: NO.*  No "push" sharing, otherwise you want up with spam
+    clusters.
+
+    Instead, /pull/ sharing.  One makes a cluster world-readable and publicizes it elsewhere.  Or,
+    one makes it editable by certain users (how to identify w/non-unique usernames and hidden email
+    addresses?) and publicizes that elsewhere.
+
+    So, permissions are:
+
+    - world readable
+    - user-writable
+
+    Workflow:
+
+    - User A makes cluster readable (by userid after searching for user names?), maybe writable;
+      sends uid to user B through a channel outside this program.
+      - Adds user B's uid to "editors" list.
+    - User B finds cluster by uid (deep link?) and adds it to their list of clusters.
+      - If not by deep link, then by an explicit "search" (or uid text-entry field).
+    - When any user deletes a cluster, it's removed from their list of clusters, and, if there are
+      no other viewers, editors, or owners, it's purged from the d/b.
+
 * Events
 
   [[file:observables.svg][file:observables.svg]]
