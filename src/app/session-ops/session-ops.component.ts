@@ -81,7 +81,7 @@ export class SessionOpsComponent implements OnInit
 
    public delayedObservableInfoShowing = false;
 
-   private get cluster(): Cluster { return this._persistenceSvc.currentClusterSubject.value; }
+   private get cluster(): Cluster { this._persistenceSvc.ensureCluster(); return this._persistenceSvc.currentClusterSubject.value; }
    
    // -------------------------------------------------  constructors  -------------------------------------------------
 
@@ -159,5 +159,11 @@ export class SessionOpsComponent implements OnInit
    {
       this.delayedObservableInfoShowing = ! this.delayedObservableInfoShowing;
       return false; // Prevent UI from taking this as an operation of some sort and refreshing.
+   }
+
+   public clearLocalStorage(): void
+   {
+      if (localStorage)
+         localStorage.clear();
    }
 }
