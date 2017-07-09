@@ -21,6 +21,8 @@
 
 *** Structure
 
+    (Note: new structure is at [[#structure-2][New structure]] in these notes.)
+
     Don't want to inhale the entire database when first loading the app.  We just need a list of clusters, and then
     details for each cluster.
 

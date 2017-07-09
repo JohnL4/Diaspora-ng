@@ -22,7 +22,7 @@ import { ASCII_US, uniqueClusterName, minimalEncode, minimalDecode } from './uti
 @Injectable()
 export class PersistenceService 
 {
-   // --------------------------------------------  Public Data, Accessors  --------------------------------------------
+   // ============================================  Public Data, Accessors  ============================================
    
    public get loginFailures(): Subject<Error> { return this._loginFailures; }
 
@@ -68,7 +68,7 @@ export class PersistenceService
     */
    private get currentPersistedCluster(): BehaviorSubject<Cluster> { return this._currentPersistedCluster; }
    
-   // -------------------------------------------------  Private Data  -------------------------------------------------
+   // =================================================  Private Data  =================================================
    
    /**
     * Map from cluster unique name to Cluster.  Zero or more of these clusters will have all data filled in (and not
@@ -152,32 +152,17 @@ export class PersistenceService
 
    private _xmlSerializer: ClusterSerializerXML;
    
-   // -------------------------------------------------  Constructors  -------------------------------------------------
+   // =================================================  Constructors  =================================================
    
    constructor( )
    {
       const me = this.constructor.name + '.ctor(): ';
+      // This thing is one of the very first objects constructed, by the DI mechanism, at app initialization.
       console.log( me + `=============================================================================================`);
    }
 
-   // ------------------------------------------------  Public Methods  ------------------------------------------------
+   // ================================================  Public Methods  ================================================
    
-   /**
-    * Ensure that this service actually has a cluster (which may be en empty dumy).
-    */
-   public ensureCluster(): void
-   {
-      if (this.currentCluster)
-      {
-         // Do nothing
-      }
-      else
-      {
-         // Just make one up!
-         this._currentGeneratedCluster = new BehaviorSubject( new Cluster());
-      }
-   }
-
    /**
     * Initialize firebase and hook up AuthStateChanged event.
     */
@@ -204,6 +189,8 @@ export class PersistenceService
       console.log( me + 'initialized');
    }
 
+   // ------------------------------------------------  Authentication  ------------------------------------------------
+   
    /**
     * Returns a User object for the given uid. May return null.
     */
@@ -286,6 +273,24 @@ export class PersistenceService
    //    return this._userPromise;
    // }
    
+   // -------------------------------------------------  Cluster Data  -------------------------------------------------
+   
+   /**
+    * Ensure that this service actually has a cluster (which may be en empty dumy).
+    */
+   public ensureCluster(): void
+   {
+      if (this.currentCluster)
+      {
+         // Do nothing
+      }
+      else
+      {
+         // Just make one up!
+         this._currentGeneratedCluster = new BehaviorSubject( new Cluster());
+      }
+   }
+
    /**
     * Initiate a request to the back end to load the cluster.
     *
@@ -340,11 +345,21 @@ export class PersistenceService
       if (!this._db) this._db = firebase.database();
 
       const updates = Object.create( null);
+
+      // Note (TODO): this doesn't (yet) do any sort of reference counting, purging entire cluster only when this is the last
+      // owner.  That'll have to be a later step.
+
       updates[`/users/${this.currentUser.value.uid}/clusters/${aUniqueName}`] = null;
-      updates[`/clusters/${aUniqueName}`] = null;
+
+      updates[`/clusters/${aUniqueName}/metadata`] = null;
+      updates[`/clusters/${aUniqueName}/owners`] = null;
+      updates[`/clusters/${aUniqueName}/editors`] = null;
+      updates[`/clusters/${aUniqueName}/viewers`] = null;
+
       updates[`/clusterData/${aUniqueName}`] = null;
 
-      this._db.ref().update( updates);
+      this._db.ref().update( updates); // TODO: test to make sure permission failure in one location blocks entire transaction.
+                                       // For example, if an editor (not an owner) tries to delete a cluster.
    }
    
    public saveCluster( aCluster: Cluster): void
@@ -372,7 +387,7 @@ export class PersistenceService
             lastChanged: new Date( Date.now()), 
             notes: aCluster.notes ? aCluster.notes : ''
       };
-      updates[`/clusters/${uniqueName}`] = clusterProps;
+      updates[`/clusters/${uniqueName}/metadata`] = clusterProps;
       
       // XML & other "full" cluster data
       this._xmlSerializer.cluster = aCluster;
@@ -395,7 +410,9 @@ export class PersistenceService
       return '';
    }
 
-   // -----------------------------------------------  Private Methods  ------------------------------------------------
+   // ===============================================  Private Methods  ================================================
+   
+   // ------------------------------------------------  Authentication  ------------------------------------------------
    
    private _loginWithPopup(): void
    {
@@ -547,6 +564,9 @@ export class PersistenceService
       // this._userPromiseDeferred.reject( aFirebaseAuthError);
    }
 
+   // ---------------------------------------------------  Database  ---------------------------------------------------
+   // - - - - - - - - - - - - - - - - - - -  (first user data, then cluster data)  - - - - - - - - - - - - - - - - - - -
+   
    /**
     * Establish initial d/b connections. Note that initial connections may result in Observables/Promises which will
     * result in further connection requests.
@@ -645,6 +665,29 @@ export class PersistenceService
    }
 
    /**
+    * Transforms incoming object, keyed by uid and having values from the public user info section of the d/b (e.g.,
+    * property 'name' (not 'displayName')) into User objects having the corresponding properties (and only those properties).
+    * @param aSnapshot 
+    */
+   private parseUsers( aSnapshot: Object): Map<string, User> {
+      const me = this.constructor.name + '.parseUsers(): ';
+      const retval = new Map<string, User>();
+      for (const uid in aSnapshot)
+      {
+         if (aSnapshot.hasOwnProperty(uid))
+         {
+            const user = aSnapshot[uid];
+            user.uid = uid;
+            retval.set(uid, user);
+         }
+      }
+      console.log( me + `snapshot contains ${retval.size} users`);
+      return retval;
+   }
+
+   // - - - - - - - - - - - - - - - - - - - - - - - - -  Cluster Data  - - - - - - - - - - - - - - - - - - - - - - - - -
+   
+   /**
     * Called when the list of names of clusters visible to the current user has changed, with the new list of Cluster
     * subjects.  Will drop subscriptions for deleted clusters and start new ones for new clusters.  Subscriptions for
     * existing clusters will continue unchanged.
@@ -666,7 +709,7 @@ export class PersistenceService
             // const newCluster = new Cluster();
             // newCluster.uid = clusterUid;
             // let clusterSubject = new BehaviorSubject<Cluster>( newCluster);
-            const clusterSubscription = this.makeDatabaseSnapshotObservable( `/clusters/${clusterUid}`)
+            const clusterSubscription = this.makeDatabaseSnapshotObservable( `/clusters/${clusterUid}/metadata`)
                .map( s => 
                { 
                      const sval = s.val(); // sval == null ==> cluster has been deleted
@@ -735,40 +778,6 @@ export class PersistenceService
       this._clusterMetadata.next( metadataList);
    }
    
-   /**
-    * Makes an Observable of DataSnapshots out of a Firebase node, so the app can subscribe to new snapshots as they are
-    * available.
-    */
-   private makeDatabaseSnapshotObservable( aNoSqlTreeNodeName: string): Observable<firebase.database.DataSnapshot>
-   {
-      if (! this._db) this._db = firebase.database();
-      const dbRef = this._db.ref( aNoSqlTreeNodeName);
-      const retval = <Observable<firebase.database.DataSnapshot>> Observable.fromEventPattern(
-         (function addHandler( h: (a: firebase.database.DataSnapshot, b?: string) => any) {
-            // Need to explicitly bind to firebaseError here because there's no easy way (that I can tell) to
-            // generate/catch errors using the Observable subscription.
-            dbRef.on( 'value', h, this.firebaseError); }).bind(this), 
-         function delHandler( h: (a: firebase.database.DataSnapshot, b?: string) => any) {
-            dbRef.off( 'value', h);
-         }
-         // ,(aSnapshot: firebase.database.DataSnapshot) => aSnapshot
-      );
-      return retval
-         // .map((s,i) => <firebase.database.DataSnapshot>s)
-      ;
-   }
-
-   /**
-    * Records that a FireBase error has occurred.  (Doesn't do a whole lot more than that right now.)
-    */ 
-   private firebaseError( anError: Error): void
-   {
-      const me = 'PersistenceService.firebaseError(): '; // this.constructor.name + ".firebaseError(): ";
-      console.log( me + `firebaseError(): ` + anError.message);
-      // if (anError.message.match( /^permission_denied/))
-      //    this.login();
-   }
-
 //    /**
 //     * Returns a map from cluster name to cluster metadata (e.g., last edited by/when, notes), which map is created from
 //     * the given d/b snapshot.
@@ -831,27 +840,45 @@ export class PersistenceService
       return retval;
    }
 
+   // - - - - - - - - - - - - - - - - - - - -  Private Database Utility Methods  - - - - - - - - - - - - - - - - - - - -
+   
    /**
-    * Transforms incoming object, keyed by uid and having values from the public user info section of the d/b (e.g.,
-    * property 'name' (not 'displayName')) into User objects having the corresponding properties (and only those properties).
-    * @param aSnapshot 
+    * Makes an Observable of DataSnapshots out of a Firebase node, so the app can subscribe to new snapshots as they are
+    * available.
     */
-   private parseUsers( aSnapshot: Object): Map<string, User> {
-      const me = this.constructor.name + '.parseUsers(): ';
-      const retval = new Map<string, User>();
-      for (const uid in aSnapshot)
-      {
-         if (aSnapshot.hasOwnProperty(uid))
-         {
-            const user = aSnapshot[uid];
-            user.uid = uid;
-            retval.set(uid, user);
+   private makeDatabaseSnapshotObservable( aNoSqlTreeNodeName: string): Observable<firebase.database.DataSnapshot>
+   {
+      if (! this._db) this._db = firebase.database();
+      const dbRef = this._db.ref( aNoSqlTreeNodeName);
+      const retval = <Observable<firebase.database.DataSnapshot>> Observable.fromEventPattern(
+         (function addHandler( h: (a: firebase.database.DataSnapshot, b?: string) => any) {
+            // Need to explicitly bind to firebaseError here because there's no easy way (that I can tell) to
+            // generate/catch errors using the Observable subscription.
+            dbRef.on( 'value', h, this.firebaseError); }).bind(this), 
+         function delHandler( h: (a: firebase.database.DataSnapshot, b?: string) => any) {
+            dbRef.off( 'value', h);
          }
-      }
-      console.log( me + `snapshot contains ${retval.size} users`);
-      return retval;
+         // ,(aSnapshot: firebase.database.DataSnapshot) => aSnapshot
+      );
+      return retval
+         // .map((s,i) => <firebase.database.DataSnapshot>s)
+      ;
    }
+
+   /**
+    * Records that a FireBase error has occurred.  (Doesn't do a whole lot more than that right now.)
+    */ 
+   private firebaseError( anError: Error): void
+   {
+      const me = 'PersistenceService.firebaseError(): '; // this.constructor.name + ".firebaseError(): ";
+      console.log( me + `firebaseError(): ` + anError.message);
+      // if (anError.message.match( /^permission_denied/))
+      //    this.login();
+   }
+
 }
+
+// =================================================  Helper Classes  ==================================================
 
 /**
  * A tuple decorating a cluster with a "seen" boolean for processing.
