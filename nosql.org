@@ -237,16 +237,100 @@
 
     - world readable
     - user-writable
+    - user-readable
+
+    I think we should drop the concept of "ownership", which has only owners being able to delete
+    clusters or change permissions.  Now, editors can change sharing.  Once shared, a cluster can
+    never be unshared (only deleted by the user, which may or may not result in the cluster being
+    purged, depending on how many other users have access to it).
 
     Workflow:
 
-    - User A makes cluster readable (by userid after searching for user names?), maybe writable;
-      sends uid to user B through a channel outside this program.
-      - Adds user B's uid to "editors" list.
+    - User A creates a new cluster.  Insertion into public nodes is allowed because no previous data
+      exists.  Insert metadata, editors, xml.
+    - User A makes cluster readable (by userid after searching for user names?  Since user names are
+      not required to be unique, perhaps if there is more than one result in the search, we force
+      users to use email addresses (w/out confirmation) -- no, can't be done, because current user
+      does not have access to email addresses; maybe give user a choice: grant access to all found
+      users or none), maybe writable, by adding user uid to "viewers" or "editors" lists; sends
+      cluster uid to user B through a channel outside this program.
     - User B finds cluster by uid (deep link?) and adds it to their list of clusters.
       - If not by deep link, then by an explicit "search" (or uid text-entry field).
     - When any user deletes a cluster, it's removed from their list of clusters, and, if there are
-      no other viewers, editors, or owners, it's purged from the d/b.
+      no other editors, it's purged from the d/b.
+      - Note this purge can only be done by an editor, not a viewer.  Furthermore, the editor cannot
+        delete a link from another user's personal node.  This matters for viewers, since the editor
+        can purge the cluster if he or she is the last editor, but not be able to clean up the
+        "hanging reference" in another viewer's personal node.  We'll have to include code to clean
+        up a viewer's personal node if it has uids for clusters that no longer exist.
+
+**** Rules for sharing
+
+     Note: change to above scheme: "readers" can read and "writers" can write (but not read).  This
+     will simplify data rules (and improve performance), since we won't have to check both "editors"
+     and "viewers" to see if someone has read rights, but it makes it incumbent on the app software
+     to get it right.
+
+***** New permission scheme
+
+     - /users
+       - $uid
+         - .read ::  auth.uid == $uid
+         - .write ::  auth.uid == $uid
+       - public
+         - .read ::  true
+         - $uid
+           - .write ::  auth.uid == $uid
+     - /clusters
+       - $clusterUid
+         - metadata
+           - .read ::  root.child('clusterData').child($clusterUid).child('readers').hasChild(auth.uid)
+           - .write ::  ! data.exists() ||
+                root.child('clusterData').child($clusterUid).child('writers').hasChild(auth.uid)
+     - /clusterData
+       - $clusterUid
+         - data -- Large data such as XML -- *NOTE:* will need transformation to push XML down into data.
+           - .read ::  data.parent().parent().child('readers').hasChild(auth.uid)
+           - .write :: ! data.exists() || data.parent().parent().child('writers').hasChild(auth.uid)
+         - writers -- *NOTE:* We'll have to transform the current "owners" node to "writers".  This
+           won't affect anything because no rules use it now.
+           - .read ::  data.hasChild(auth.uid) -- Will this work?  Do we even need it?
+           - .write :: ! data.exists() ||  data.hasChild(auth.uid)
+         - readers
+           - .read ::  data.hasChild(auth.uid) -- Will this work?  Do we even need it?
+           - .write ::  ! data.exists() || data.parent().child('writers").hasChild(auth.uid) -- This
+                is how one user grants permission to another.
+
+***** Old permission scheme (hold on to this for a while)
+      
+     - /users
+       - $uid
+         - .read ::  auth.uid == $uid
+         - .write ::  auth.uid == $uid
+       - public
+         - .read ::  true
+         - $uid
+           - .write ::  auth.uid == $uid
+     - /clusters
+       - $clusterUid
+         - metadata
+           - .read ::  root.child('clusterData').child($clusterUid).child('editors').hasChild(auth.uid) ||
+                root.child('clusterData').child($clusterUid).child('viewers').hasChild(auth.uid)
+           - .write ::  ! data.exists() ||
+                root.child('clusterData').child($clusterUid).child('editors').hasChild(auth.uid)
+     - /clusterData
+       - $clusterUid
+         - .read ::  root.child('clusters').child($clusterUid).child('editors').hasChild(auth.uid) ||
+              root.child('clusters').child($clusterUid).child('viewers').hasChild(auth.uid)
+         - .write :: ! data.exists() ||
+              root.child('clusters').child($clusterUid).child('editors').hasChild(auth.uid)
+         - editors
+           - .read ::  data.hasChild(auth.uid) -- Will this work?  Do we even need it?
+           - .write ::  data.hasChild(auth.uid)
+         - viewers
+           - .read ::  data.hasChild(auth.uid) -- Will this work?  Do we even need it?
+           - .write ::  data.parent().child('editors').hasChild(auth.uid) -- This is how one user
+                grants permission to another.
 
 * Events
 
