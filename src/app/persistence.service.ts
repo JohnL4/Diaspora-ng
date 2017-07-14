@@ -9,6 +9,7 @@ import { ClusterSerializerXML } from './cluster-serializer-xml';
 import { Uid } from './uid';
 import { User } from './user';
 import { ASCII_US, uniqueClusterName, minimalEncode, minimalDecode } from './utils';
+import { ClusterContent } from "app/cluster-content";
 
 // I'm thinking this thing stores serialized XML somewhere and retrieves it from somewhere.
 //
@@ -317,7 +318,7 @@ export class PersistenceService
          // TODO: unsubscribe or whatever needs to be done (the above is just a guess).
       // }
       this._currentPersistedCluster = new BehaviorSubject<Cluster>( new Cluster());
-      this._currentPersistedClusterSubscription = this.makeDatabaseSnapshotObservable( `/clusterData/${aUniqueName}`)
+      this._currentPersistedClusterSubscription = this.makeDatabaseSnapshotObservable( `/clusterData/${aUniqueName}/data`)
          .map( s => this.parseClusterData( aUniqueName, s.val()))
          .multicast( this._currentPersistedCluster)
          .connect();
@@ -352,6 +353,8 @@ export class PersistenceService
       updates[`/users/${this.currentUser.value.uid}/clusters/${aUniqueName}`] = null;
 
       updates[`/clusters/${aUniqueName}/metadata`] = null;
+
+      // These three permissions lists really should already be null, since I moved them over to /clusterData.
       updates[`/clusters/${aUniqueName}/owners`] = null;
       updates[`/clusters/${aUniqueName}/editors`] = null;
       updates[`/clusters/${aUniqueName}/viewers`] = null;
@@ -375,10 +378,6 @@ export class PersistenceService
          aCluster.uid = uniqueName; // Assumed to be a straight UUId.
       }
       const dbRef = this._db.ref();
-      const updates = Object.create( null);
-
-      // Clusters visible to current user: this one that we're saving, for sure.
-      updates[`/users/${this.currentUser.value.uid}/clusters/${aCluster.uid}`] = true;
 
       // Metadata
       const clusterProps = { 
@@ -387,17 +386,20 @@ export class PersistenceService
             lastChanged: new Date( Date.now()), 
             notes: aCluster.notes ? aCluster.notes : ''
       };
-      updates[`/clusters/${uniqueName}/metadata`] = clusterProps;
       
       // XML & other "full" cluster data
       this._xmlSerializer.cluster = aCluster;
       const xml = this._xmlSerializer.serialize();
       const owners = Object.create( null); // TODO: do we need this?
       owners[ `${this.currentUser.value.uid}`] = 1;
-      const clusterDataProps = { xml: xml,
-                               owners: owners
-                             };
-      updates[`/clusterData/${uniqueName}`] = clusterDataProps;
+
+      const updates = Object.create( null);
+
+      // Clusters visible to current user: this one that we're saving, for sure.
+      updates[`/users/${this.currentUser.value.uid}/clusters/${aCluster.uid}`] = true;
+      updates[`/clusters/${uniqueName}/metadata`] = clusterProps;
+      updates[`/clusterData/${uniqueName}/data/xml`] = xml;
+      updates[`/clusterData/${uniqueName}/owners`] = owners;
 
       dbRef.update( updates);
    }
@@ -824,7 +826,7 @@ export class PersistenceService
       let retval: Cluster;
       if (aSnapshot)
       {
-         const snapshot = <ClusterData> aSnapshot; 
+         const snapshot = <ClusterContent> aSnapshot; 
          const serializer = new ClusterSerializerXML();
          const errors = serializer.deserialize( snapshot.xml);
          if (errors)
