@@ -391,7 +391,7 @@ export class PersistenceService
       this._xmlSerializer.cluster = aCluster;
       const xml = this._xmlSerializer.serialize();
       const owners = Object.create( null); // TODO: do we need this?
-      owners[ `${this.currentUser.value.uid}`] = 1;
+      owners[ `${this.currentUser.value.uid}`] = true;
 
       const updates = Object.create( null);
 
@@ -399,7 +399,8 @@ export class PersistenceService
       updates[`/users/${this.currentUser.value.uid}/clusters/${aCluster.uid}`] = true;
       updates[`/clusters/${uniqueName}/metadata`] = clusterProps;
       updates[`/clusterData/${uniqueName}/data/xml`] = xml;
-      updates[`/clusterData/${uniqueName}/owners`] = owners;
+      updates[`/clusterData/${uniqueName}/writers`] = owners;
+      updates[`/clusterData/${uniqueName}/readers`] = owners;
 
       dbRef.update( updates);
    }

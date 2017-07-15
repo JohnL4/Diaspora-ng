@@ -332,6 +332,32 @@
            - .write ::  data.parent().child('editors').hasChild(auth.uid) -- This is how one user
                 grants permission to another.
 
+**** UI for sharing
+
+***** Send to another user
+      
+     New tab?  "Share".
+
+     Search for users.  Enter substring, show prefix, then contains.
+
+     User picks recipient.  Gets warning if name is not unique.  What to do (all or none)?
+
+     Role: reader or writer.
+
+     Commit.  Adds given user uid to "readers" or "writers,readers" lists.  (NOTE: add self to both
+     writers and readers lists.)
+
+***** Received from another user
+
+      On "Share" tab, explicitly add current cluster to current list.
+
+****** TODO Is there a way to tell ahead of time what the current rights are? i.e., is it possible to tell
+       if current cluster is read-only?
+
+***** Special value: world
+
+     Special value: world.  Only role possibility is "reader".
+
 * Events
 
   [[file:observables.svg][file:observables.svg]]
