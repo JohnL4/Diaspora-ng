@@ -338,21 +338,78 @@
       
      New tab?  "Share".
 
-     Search for users.  Enter substring, show prefix, then contains.
+     Select recipient: world or search for users: 
 
-     User picks recipient.  Gets warning if name is not unique.  What to do (all or none)?
+     - By user name: Enter substring, show prefix, then contains.
+     - NOTE: Can't do this because we'd have to make email addresses publicly-readable in order to
+       confirms a match or look up a user uid.  +By email: requires exact match (since the cluster
+       will be shared to an email address that the user already knows anyway, this will work).+
+
+     User picks recipient.  Gets warning if name is not unique.  What to do (all or none)?  +Maybe
+     can show email address domain name, if available.+  Domain is not publicly readable, so we
+     won't be able to show it (because we won't be able to read it).  (In fact... there's not really
+     any reason to keep email addresses at all, if we'll never use them for anything.)
 
      Role: reader or writer.
 
      Commit.  Adds given user uid to "readers" or "writers,readers" lists.  (NOTE: add self to both
      writers and readers lists.)
 
+****** UI
+
+       (Note that "write" on this UI really means "read AND write".)
+
+       #+BEGIN_SRC picture
+         Share:     
+
+             (_) For reading   (_) For writing
+
+             With:
+
+             (_) World
+             (_) Person
+                 Name:  [___________________]            
+                    [_] Search result 1  
+                    [_] Search result 2  
+                    [_] Search result 3  
+
+             [SHARE]                    
+
+         Already shared with:           
+
+                             Read  Write    Delete
+             WORLD                           [X]
+             Name 1          (X)    (_)      [X] 
+             Name 2          (_)    (X)      [X] 
+             Name 3          (X)    (_)      [X] 
+
+             [UPDATE] [REVERT]
+       #+END_SRC 
+
+       Notes on this UI (and maybe all these sorts of insert-new-row-maintain-old-rows things):
+
+       "Delete" button is immediate, but read/write chg is not (needs commit, can be reverted).
+       That's bad.
+
+       Instead, "delete" could dim or strike row to indicate that it's staged for deletion, with
+       "commit" or "revert" then being applicable.
+
+       Make buttons light up when they're "armed" with changes (so, "insert", "commit", "revert").
+
 ***** Received from another user
 
       On "Share" tab, explicitly add current cluster to current list.
 
-****** TODO Is there a way to tell ahead of time what the current rights are? i.e., is it possible to tell
+****** DONE Is there a way to tell ahead of time what the current rights are? i.e., is it possible to tell
+       CLOSED: [2017-07-15 Sat 13:10]
+       - CLOSING NOTE [2017-07-15 Sat 13:10] \\
+         Not really, but maybe predicate another read permission on write permission allows a non-destructive test.
+
        if current cluster is read-only?
+
+       Answer: not that I can tell. But maybe if we attempt to /read/ the list of writers (or
+       perform some other read operation whose success depends on having write permissions) we can
+       know ahead of time (by receiving an exception) and then proceed from there.
 
 ***** Special value: world
 

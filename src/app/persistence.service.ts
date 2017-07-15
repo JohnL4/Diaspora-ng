@@ -355,11 +355,13 @@ export class PersistenceService
       updates[`/clusters/${aUniqueName}/metadata`] = null;
 
       // These three permissions lists really should already be null, since I moved them over to /clusterData.
-      updates[`/clusters/${aUniqueName}/owners`] = null;
-      updates[`/clusters/${aUniqueName}/editors`] = null;
-      updates[`/clusters/${aUniqueName}/viewers`] = null;
+      // updates[`/clusters/${aUniqueName}/owners`] = null;
+      // updates[`/clusters/${aUniqueName}/editors`] = null;
+      // updates[`/clusters/${aUniqueName}/viewers`] = null;
 
-      updates[`/clusterData/${aUniqueName}`] = null;
+      updates[`/clusterData/${aUniqueName}/data`] = null;
+      updates[`/clusterData/${aUniqueName}/writers`] = null;
+      updates[`/clusterData/${aUniqueName}/readers`] = null;
 
       this._db.ref().update( updates); // TODO: test to make sure permission failure in one location blocks entire transaction.
                                        // For example, if an editor (not an owner) tries to delete a cluster.
