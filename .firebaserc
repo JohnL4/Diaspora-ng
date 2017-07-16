@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "diaspora-21544"
+    "default": "diaspora-21544",
+    "dev": "diaspora-dev"
   }
 }
