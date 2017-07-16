@@ -398,6 +398,10 @@
 
 ***** Received from another user
 
+      Received, deep-linked cluster will not be remembered to the current user's list of clusters
+      unless it is saved (via regular "Save" button).  This needs to be done even for read-only
+      shares (although it's always possible to revisit the deep link).
+
       On "Share" tab, explicitly add current cluster to current list.
 
 ****** DONE Is there a way to tell ahead of time what the current rights are? i.e., is it possible to tell

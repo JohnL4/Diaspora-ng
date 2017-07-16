@@ -1,0 +1,52 @@
+// Firebase realtime database security rules.
+{
+  "rules": {
+    "clusters": {
+        "$clusterUid": {
+            "metadata": {
+                ".read": "root.child('clusterData').child($clusterUid).child('readers').hasChild(auth.uid)",
+				// Insert new data or update existing data current user already owns
+                ".write": "! data.exists() || root.child('clusterData').child($clusterUid).child('writers').hasChild(auth.uid)"
+            }
+        }
+    },
+    "clusterData": {
+        "$clusterUid": {
+            "data": {
+                ".read": "data.parent().child('readers').hasChild(auth.uid)",
+                ".write": "! data.exists() || data.parent().child('writers').hasChild(auth.uid)"
+            },
+            "writers": {
+                ".read": "data.hasChild(auth.uid)",
+                ".write": "! data.exists() ||  data.hasChild(auth.uid)"
+            },
+            "readers": {
+                ".read": "data.hasChild(auth.uid)",
+                ".write": "! data.exists() || data.parent().child('writers').hasChild(auth.uid)"
+            }
+        }
+    },
+    "users": {
+      "$userUid": {
+ 	  		".read": "auth.uid === $userUid",
+  	  	".write": "auth.uid === $userUid"          
+        }
+    },
+    "usersPublic": {
+      ".read": true,
+      "$userUid": {
+        ".write": "auth.uid === $userUid" 
+      }
+    },
+    "clusterNames": {
+ 	  	".read": "auth != null",
+	    ".write": "auth != null"            
+          },
+    "ruleTest": {
+      ".read": false,
+      "node1": {
+        ".read": true
+      }
+    }
+  }
+}
