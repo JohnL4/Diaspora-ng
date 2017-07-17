@@ -1,0 +1,90 @@
+// Firebase Bolt rules for Diaspora database
+
+type User
+{
+   email: String,
+   lastLogin: String,         // date
+   timeZoneOffset: Number,    // minutes
+   clusters: String[]         // uuids
+}
+
+type UserPublicInfo
+{
+   name: String
+}
+
+type ClusterMetadata
+{
+   name: String,
+   notes: String,
+   lastAuthor: String,        // firebase uid
+   lastChanged: String        // date
+}
+
+type ClusterData
+{
+   xml: String
+}
+
+type Cluster
+{
+   data: ClusterData,
+   readers: String[],         // firebase uids
+   writers: String[]          // firebase uids
+}
+
+// -----------------------------------------------------------------------------------------------
+
+path /users/{$userUid} is User
+{
+   read() { auth.uid == $userUid }
+   write() { auth.uid == $userUid }
+}
+
+path /usersPublic {
+   read() { true }
+}
+
+path /usersPublic/{$userUid} is UserPublicInfo
+{
+   write() { auth.uid == $userUid }
+}
+
+path /clusters/{$clusterUuid}/metadata is ClusterMetadata
+{
+   /*
+                ".read": "root.child('clusterData').child($clusterUid).child('readers').hasChild(auth.uid)",
+				// Insert new data or update existing data current user already owns
+                ".write": "! data.exists() || root.child('clusterData').child($clusterUid).child('writers').hasChild(auth.uid)"
+   */
+   read() { canReadCluster( $clusterUuid, auth.uid) }
+   create() { auth != null }
+   update() { canEditCluster( $clusterUuid, auth.uid) }
+   delete() { canEditCluster( $clusterUuid, auth.uid) }
+}
+
+path /clusterData/{$clusterUuid} is Cluster
+{
+   read() { canReadCluster( $clusterUuid, auth.uid) }
+   create() { auth != null }
+   update() { canEditCluster( $clusterUuid, auth.uid) }
+   delete() { canEditCluster( $clusterUuid, auth.uid) }
+}
+
+// Keep for old StackOverflow post.  TODO: put link to post here
+path /clusterNames {
+   read() { auth != null }
+   write() { auth != null }
+}
+
+// ---------------------------------------------------------------------------------------------
+
+function canEditCluster(clusterUuid, userUid) 
+{ 
+   root.clusterData[ clusterUuid].writers[ userUid] != null; 
+}
+
+function canReadCluster(clusterUuid, userUid)
+{
+   root.clusterData[ clusterUuid].readers[ userUid] != null;
+}

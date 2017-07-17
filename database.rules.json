@@ -1,52 +1,101 @@
-// Firebase realtime database security rules.
 {
   "rules": {
-    "clusters": {
-        "$clusterUid": {
-            "metadata": {
-                ".read": "root.child('clusterData').child($clusterUid).child('readers').hasChild(auth.uid)",
-				// Insert new data or update existing data current user already owns
-                ".write": "! data.exists() || root.child('clusterData').child($clusterUid).child('writers').hasChild(auth.uid)"
-            }
-        }
-    },
-    "clusterData": {
-        "$clusterUid": {
-            "data": {
-                ".read": "data.parent().child('readers').hasChild(auth.uid)",
-                ".write": "! data.exists() || data.parent().child('writers').hasChild(auth.uid)"
-            },
-            "writers": {
-                ".read": "data.hasChild(auth.uid)",
-                ".write": "! data.exists() ||  data.hasChild(auth.uid)"
-            },
-            "readers": {
-                ".read": "data.hasChild(auth.uid)",
-                ".write": "! data.exists() || data.parent().child('writers').hasChild(auth.uid)"
-            }
-        }
-    },
     "users": {
       "$userUid": {
- 	  		".read": "auth.uid === $userUid",
-  	  	".write": "auth.uid === $userUid"          
-        }
+        ".validate": "newData.hasChildren(['email', 'lastLogin', 'timeZoneOffset'])",
+        "email": {
+          ".validate": "newData.isString()"
+        },
+        "lastLogin": {
+          ".validate": "newData.isString()"
+        },
+        "timeZoneOffset": {
+          ".validate": "newData.isNumber()"
+        },
+        "clusters": {
+          "$key1": {
+            ".validate": "newData.isString()"
+          },
+          ".validate": "newData.hasChildren()"
+        },
+        "$other": {
+          ".validate": "false"
+        },
+        ".read": "auth.uid == $userUid",
+        ".write": "auth.uid == $userUid"
+      }
     },
     "usersPublic": {
-      ".read": true,
+      ".read": "true",
       "$userUid": {
-        ".write": "auth.uid === $userUid" 
+        ".validate": "newData.hasChildren(['name'])",
+        "name": {
+          ".validate": "newData.isString()"
+        },
+        "$other": {
+          ".validate": "false"
+        },
+        ".write": "auth.uid == $userUid"
+      }
+    },
+    "clusters": {
+      "$clusterUuid": {
+        "metadata": {
+          ".validate": "newData.hasChildren(['name', 'notes', 'lastAuthor', 'lastChanged'])",
+          "name": {
+            ".validate": "newData.isString()"
+          },
+          "notes": {
+            ".validate": "newData.isString()"
+          },
+          "lastAuthor": {
+            ".validate": "newData.isString()"
+          },
+          "lastChanged": {
+            ".validate": "newData.isString()"
+          },
+          "$other": {
+            ".validate": "false"
+          },
+          ".write": "data.val() == null && auth != null || data.val() != null && newData.val() != null && newData.parent().parent().parent().child('clusterData').child($clusterUuid).child('writers').child(auth.uid).val() != null || data.val() != null && newData.val() == null && newData.parent().parent().parent().child('clusterData').child($clusterUuid).child('writers').child(auth.uid).val() != null",
+          ".read": "root.child('clusterData').child($clusterUuid).child('readers').child(auth.uid).val() != null"
+        }
+      }
+    },
+    "clusterData": {
+      "$clusterUuid": {
+        ".validate": "newData.hasChildren(['data'])",
+        "data": {
+          ".validate": "newData.hasChildren(['xml'])",
+          "xml": {
+            ".validate": "newData.isString()"
+          },
+          "$other": {
+            ".validate": "false"
+          }
+        },
+        "readers": {
+          "$key1": {
+            ".validate": "newData.isString()"
+          },
+          ".validate": "newData.hasChildren()"
+        },
+        "writers": {
+          "$key1": {
+            ".validate": "newData.isString()"
+          },
+          ".validate": "newData.hasChildren()"
+        },
+        "$other": {
+          ".validate": "false"
+        },
+        ".write": "data.val() == null && auth != null || data.val() != null && newData.val() != null && newData.parent().parent().child('clusterData').child($clusterUuid).child('writers').child(auth.uid).val() != null || data.val() != null && newData.val() == null && newData.parent().parent().child('clusterData').child($clusterUuid).child('writers').child(auth.uid).val() != null",
+        ".read": "root.child('clusterData').child($clusterUuid).child('readers').child(auth.uid).val() != null"
       }
     },
     "clusterNames": {
- 	  	".read": "auth != null",
-	    ".write": "auth != null"            
-          },
-    "ruleTest": {
-      ".read": false,
-      "node1": {
-        ".read": true
-      }
+      ".read": "auth != null",
+      ".write": "auth != null"
     }
   }
 }
