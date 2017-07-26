@@ -10,6 +10,8 @@ import { Uid } from './uid';
 import { User } from './user';
 import { ASCII_US, uniqueClusterName, minimalEncode, minimalDecode } from './utils';
 import { ClusterContent } from "app/cluster-content";
+import { RuntimeEnvironment } from './runtime-environment';
+import { FirebaseConfig } from './firebase-config';
 
 // I'm thinking this thing stores serialized XML somewhere and retrieves it from somewhere.
 //
@@ -25,6 +27,8 @@ export class PersistenceService
 {
    // ============================================  Public Data, Accessors  ============================================
    
+   public get environments(): RuntimeEnvironment[] { return this._environments; }
+
    public get loginFailures(): Subject<Error> { return this._loginFailures; }
 
    /**
@@ -77,13 +81,35 @@ export class PersistenceService
     */ 
    private _latestClusterMap: Map<string, Cluster>;
    
-   private _firebaseConfig = {
-            apiKey: 'AIzaSyBiNVpydoOUGJiIavCB3f8qvB6ARYSy_1E',
-            authDomain: 'diaspora-21544.firebaseapp.com',
-            databaseURL: 'https://diaspora-21544.firebaseio.com',
-            storageBucket: 'diaspora-21544.appspot.com',
-            messagingSenderId: '222484722746'
-      };
+   private _firebaseConfigProd = {
+      apiKey: 'AIzaSyBiNVpydoOUGJiIavCB3f8qvB6ARYSy_1E',
+      authDomain: 'diaspora-21544.firebaseapp.com',
+      databaseURL: 'https://diaspora-21544.firebaseio.com',
+      projectId: "diaspora-21544",
+      storageBucket: 'diaspora-21544.appspot.com',
+      messagingSenderId: '222484722746'
+   };
+
+   private _environments: RuntimeEnvironment[] = [
+      new RuntimeEnvironment("Production",
+         new FirebaseConfig(
+            this._firebaseConfigProd.apiKey,
+            this._firebaseConfigProd.authDomain,
+            this._firebaseConfigProd.databaseURL,
+            this._firebaseConfigProd.projectId,
+            this._firebaseConfigProd.storageBucket,
+            this._firebaseConfigProd.messagingSenderId)),
+      new RuntimeEnvironment("Development",
+         new FirebaseConfig(
+            "AIzaSyDvVUt19co9Pu_kIln7FeW1LIGlujj03Ts",
+            "diaspora-dev.firebaseapp.com",
+            "https://diaspora-dev.firebaseio.com",
+            "diaspora-dev",
+            "diaspora-dev.appspot.com",
+            "35664389096"
+         )
+      )
+   ];
 
    // private _ui: any;            // Firebase ui
    private _db: firebase.database.Database;
@@ -179,7 +205,7 @@ export class PersistenceService
 
       this._xmlSerializer = new ClusterSerializerXML();
       
-      firebase.initializeApp( this._firebaseConfig);
+      firebase.initializeApp( this._firebaseConfigProd);
 
       // this._userPromise = new Promise(
       //    ( resolve, reject) => this._userPromiseDeferred = {resolve: resolve, reject: reject});
@@ -208,6 +234,8 @@ export class PersistenceService
     */
    public login(): void
    {
+      const me = this.constructor.name + ".login(): ";
+      console.log( me);
       this._loginWithPopup();
    }
 

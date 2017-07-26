@@ -6,6 +6,7 @@ import { UUIDv4 } from 'uuid-version4';
 import { Cluster } from '../cluster';
 import { PersistenceService } from '../persistence.service';
 import { User } from '../user';
+import { RuntimeEnvironment } from '../runtime-environment';
 
 @Component({
   selector: 'app-session-ops',
@@ -26,6 +27,9 @@ export class SessionOpsComponent implements OnInit
       // console.log( me + `JSON name: ${jsonStringifiedName}`);
    };
 
+   public get environments(): RuntimeEnvironment[] { return this._persistenceSvc.environments; }
+   public environment: string = this.environments[0].name;
+   
    /**
     * True if we are currently logging the user in with email/password.
     */

@@ -47,6 +47,20 @@
 
 <form class="form-horizontal">
 
+   <div class="form-group">
+      <div class="col-sm-2 control-label">
+         <label for="environment">
+         Environment
+         <!-- [{{environment}}] -->
+      </label>
+      </div>
+      <div class="col-sm-2" *ngFor="let env of environments">
+         <label class="radio-inline">
+            <input name="environment" type="radio" value="{{env.name}}" [(ngModel)]="environment">{{env.name}}
+         </label>
+      </div>
+   </div>
+
 <div class="form-group">
    <div class="col-sm-1">
       <p><button class="btn btn-default" type="button" (click)="loginWithGoogle()">Login With Google</button></p>
