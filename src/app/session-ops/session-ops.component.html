@@ -57,7 +57,8 @@
       <div class="col-sm-2" *ngFor="let env of environments; index as i">
          <label class="radio-inline">
             <input name="environment" type="radio" value="{{i}}" [(ngModel)]="environmentIndex" (change)="handleEnvironmentChange()">
-            {{i}}: {{env.name}}
+            <!-- {{i}}:  -->
+            {{env.name}}
          </label>
       </div>
    </div>
