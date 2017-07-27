@@ -51,12 +51,13 @@
       <div class="col-sm-2 control-label">
          <label for="environment">
          Environment
-         <!-- [{{environment}}] -->
+         <!-- [{{environmentIndex}}] -->
       </label>
       </div>
-      <div class="col-sm-2" *ngFor="let env of environments">
+      <div class="col-sm-2" *ngFor="let env of environments; index as i">
          <label class="radio-inline">
-            <input name="environment" type="radio" value="{{env.name}}" [(ngModel)]="environment">{{env.name}}
+            <input name="environment" type="radio" value="{{i}}" [(ngModel)]="environmentIndex" (change)="handleEnvironmentChange()">
+            {{i}}: {{env.name}}
          </label>
       </div>
    </div>
