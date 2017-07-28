@@ -28,7 +28,17 @@ export class SessionOpsComponent implements OnInit
    };
 
    public get environments(): RuntimeEnvironment[] { return this._persistenceSvc.environments; }
-   public environmentIndex: string = "0"; // Has to be string, because (I guess) what we pass between this and HTML is strings.
+
+   // Has to be string, because (I guess) what we pass between this and HTML is strings.
+   public get environmentIndex(): string { return this._persistenceSvc.currentEnvironmentIndex.toString(); }
+   public set environmentIndex( anIndex: string)
+   {
+      const i = Number.parseInt( anIndex);
+      if (isNaN(i))
+         throw new Error( `Must be an integer: ${anIndex}`);
+      else
+         this._persistenceSvc.currentEnvironmentIndex = i;
+   }
    
    /**
     * True if we are currently logging the user in with email/password.
@@ -99,22 +109,16 @@ export class SessionOpsComponent implements OnInit
       console.log( me);
       // this.getUser();           // I think this basically hooks up the promise resolution event.
       this.uuid = UUIDv4.generateUUID();
-      if (localStorage)
-      {
-         let envIx = localStorage.getItem('environmentIndex');
-         if (envIx != null)
-            this.environmentIndex = envIx;
-      }
    }
 
    public handleEnvironmentChange()
    {
       const me = this.constructor.name + ".handleEnvironmentChange()";
       // console.log( `${me}: environmentIndex = ${this.environmentIndex}`);
-      if (localStorage)
-      {
-         localStorage.setItem( 'environmentIndex', this.environmentIndex);
-      }
+      // if (localStorage)
+      // {
+      //    localStorage.setItem( 'environmentIndex', this.environmentIndex);
+      // }
    }
 
    public loginWithGoogle()

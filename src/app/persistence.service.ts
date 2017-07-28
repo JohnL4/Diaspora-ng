@@ -25,9 +25,30 @@ import { FirebaseConfig } from './firebase-config';
 @Injectable()
 export class PersistenceService 
 {
+   /**
+    * Key by which env. index is stored in localstorage.
+    */
+   private static readonly ENVIRONMENT_INDEX_KEY = 'environmentIndex';
+
    // ============================================  Public Data, Accessors  ============================================
    
    public get environments(): RuntimeEnvironment[] { return this._environments; }
+
+   /**
+    * Index of currently-active RuntimeEnvironment.
+    */
+   public get currentEnvironmentIndex(): number { return this._currentEnvironmentIndex; }
+   public set currentEnvironmentIndex( anIndex: number)
+   {
+      if (anIndex < 0 || anIndex >= this.environments.length)
+         throw new Error( `illegal index (${anIndex}); must be < ${this.environments.length}`);
+      else
+      {
+         this._currentEnvironmentIndex = anIndex;
+         if (localStorage)
+            localStorage.setItem(PersistenceService.ENVIRONMENT_INDEX_KEY, anIndex.toString());
+      }
+   }
 
    public get loginFailures(): Subject<Error> { return this._loginFailures; }
 
@@ -90,15 +111,10 @@ export class PersistenceService
       messagingSenderId: '222484722746'
    };
 
+   /**
+    * List of runtime environments (think "databases") against which this app can run.
+    */
    private _environments: RuntimeEnvironment[] = [
-      new RuntimeEnvironment("Production",
-         new FirebaseConfig(
-            this._firebaseConfigProd.apiKey,
-            this._firebaseConfigProd.authDomain,
-            this._firebaseConfigProd.databaseURL,
-            this._firebaseConfigProd.projectId,
-            this._firebaseConfigProd.storageBucket,
-            this._firebaseConfigProd.messagingSenderId)),
       new RuntimeEnvironment("Development",
          new FirebaseConfig(
             "AIzaSyDvVUt19co9Pu_kIln7FeW1LIGlujj03Ts",
@@ -107,9 +123,18 @@ export class PersistenceService
             "diaspora-dev",
             "diaspora-dev.appspot.com",
             "35664389096"
-         )
-      )
+         )),
+      new RuntimeEnvironment("Production",
+         new FirebaseConfig(
+            this._firebaseConfigProd.apiKey,
+            this._firebaseConfigProd.authDomain,
+            this._firebaseConfigProd.databaseURL,
+            this._firebaseConfigProd.projectId,
+            this._firebaseConfigProd.storageBucket,
+            this._firebaseConfigProd.messagingSenderId))
    ];
+
+   private _currentEnvironmentIndex: number;
 
    // private _ui: any;            // Firebase ui
    private _db: firebase.database.Database;
@@ -202,6 +227,17 @@ export class PersistenceService
          console.log( me + 'already initialized');
          return;
       }
+
+      if (localStorage)
+      {
+         let envIxStr = localStorage.getItem( PersistenceService.ENVIRONMENT_INDEX_KEY);
+         if (envIxStr == null)
+            this._currentEnvironmentIndex = 0;
+         else
+            this._currentEnvironmentIndex = Number.parseInt( envIxStr);
+      }
+      else
+         this._currentEnvironmentIndex = 0;
 
       this._xmlSerializer = new ClusterSerializerXML();
       
