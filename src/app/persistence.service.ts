@@ -241,15 +241,57 @@ export class PersistenceService
 
       this._xmlSerializer = new ClusterSerializerXML();
       
-      firebase.initializeApp( this._firebaseConfigProd);
+      // firebase.initializeApp( this._firebaseConfigProd);
 
-      // this._userPromise = new Promise(
-      //    ( resolve, reject) => this._userPromiseDeferred = {resolve: resolve, reject: reject});
+      // // this._userPromise = new Promise(
+      // //    ( resolve, reject) => this._userPromiseDeferred = {resolve: resolve, reject: reject});
       
-      firebase.auth().onAuthStateChanged( this.authStateChanged.bind( this), this.authError.bind( this));
+      // firebase.auth().onAuthStateChanged( this.authStateChanged.bind( this), this.authError.bind( this));
 
       this._initialized = true;
       console.log( me + 'initialized');
+   }
+
+   public setEnvironment( anEnvironment: RuntimeEnvironment): void
+   {
+      let alreadyInitialized;
+      let app: firebase.app.App;
+      try
+      {
+         app = firebase.app();
+         if (app && app.options['projectId'] == anEnvironment.firebaseConfig.projectId)
+            alreadyInitialized = true;
+         else
+            alreadyInitialized = false;
+      }
+      catch (err)
+      {
+         if (err.code == 'app/no-app')
+         {
+            alreadyInitialized = false;
+         }
+         else throw err;
+      }
+      if (alreadyInitialized)
+      {
+         // Do nothing; we're good
+      }
+      else
+      {
+         if (app)
+         {
+            this._db = null;
+            app.delete().then(() => this._initApp(anEnvironment));
+         }
+         else
+            this._initApp(anEnvironment);
+      }
+   }
+
+   private _initApp( anEnvironment: RuntimeEnvironment): void
+   {
+         firebase.initializeApp(anEnvironment.firebaseConfig);
+         firebase.auth().onAuthStateChanged(this.authStateChanged.bind(this), this.authError.bind(this));
    }
 
    // ------------------------------------------------  Authentication  ------------------------------------------------

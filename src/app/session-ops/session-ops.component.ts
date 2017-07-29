@@ -15,6 +15,8 @@ import { RuntimeEnvironment } from '../runtime-environment';
 })
 export class SessionOpsComponent implements OnInit
 {
+   // --------------------------------------------  public data, accessors  --------------------------------------------
+   
    public get user(): Observable<User> { return this._persistenceSvc.currentUser; }
    public uuid: string;
       
@@ -101,7 +103,7 @@ export class SessionOpsComponent implements OnInit
 
    constructor( /* private _cluster: Cluster, */ private _persistenceSvc: PersistenceService) { }
 
-   // ---------------------------------------------------  methods  ----------------------------------------------------
+   // ------------------------------------------------  public methods  ------------------------------------------------
 
    ngOnInit()
    {
@@ -123,6 +125,7 @@ export class SessionOpsComponent implements OnInit
 
    public loginWithGoogle()
    {
+      this.setEnvironment();
       const me = this.constructor.name + '.login(): ';
       console.log( me + 'logging in');
       this._persistenceSvc.login();
@@ -139,6 +142,7 @@ export class SessionOpsComponent implements OnInit
       const me = this.constructor.name + '.loginWithEmail(): ';
       console.log(me
          + `Logging in w/email acct ${this.userEmail}, password ${this.emailPassword} ${this.isNewEmailAccount ? '(new account)' : ''}`);
+      this.setEnvironment();
       if (this.isNewEmailAccount)
       {
          if (this.emailPassword === this.emailPassword2)
@@ -189,5 +193,12 @@ export class SessionOpsComponent implements OnInit
    {
       if (localStorage)
          localStorage.clear();
+   }
+
+   // -----------------------------------------------  private methods  ------------------------------------------------
+
+   private setEnvironment(): void
+   {
+      this._persistenceSvc.setEnvironment( this.environments[ this._persistenceSvc.currentEnvironmentIndex]);
    }
 }
