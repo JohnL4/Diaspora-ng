@@ -475,6 +475,8 @@ export class PersistenceService
    
    public saveCluster( aCluster: Cluster): void
    {
+      const me = this.constructor.name + '.saveCluster()';
+      console.log( me);
       // let uniqueName = JSON.stringify( minimalEncode( uniqueClusterName( aCluster, this.currentUser.value)));
       // const uniqueName = encodeURIComponent( uniqueClusterName( aCluster, this.currentUser.value));
       let uniqueName: string;
@@ -485,6 +487,8 @@ export class PersistenceService
          uniqueName = uniqueClusterName( aCluster, this.currentUser.value);
          aCluster.uid = uniqueName; // Assumed to be a straight UUId.
       }
+      if (! this._db)
+         this._db = firebase.database();
       const dbRef = this._db.ref();
 
       // Metadata
@@ -510,7 +514,26 @@ export class PersistenceService
       updates[`/clusterData/${uniqueName}/writers`] = owners;
       updates[`/clusterData/${uniqueName}/readers`] = owners;
 
-      dbRef.update( updates);
+      /* test data
+      {
+         'users': {
+            'userUid' {
+               'clusters': {
+                  'clusterUid': true
+               }
+            }
+         }
+      }
+      */
+
+      console.log( `${me}: writing cluster data`);
+      dbRef.update(updates).then(
+         () => console.log(`${me}: update successful`),
+         (err: firebase.FirebaseError) => 
+         {
+            console.log(`${me}: update failed; code = ${err.code}; msg = "${err.message}"`);
+         }
+      );
    }
 
    /**
