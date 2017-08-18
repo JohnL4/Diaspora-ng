@@ -2,25 +2,6 @@
   "rules": {
     "users": {
       "$userUid": {
-        ".validate": "newData.hasChildren(['email', 'lastLogin', 'timeZoneOffset'])",
-        "email": {
-          ".validate": "newData.isString()"
-        },
-        "lastLogin": {
-          ".validate": "newData.isString()"
-        },
-        "timeZoneOffset": {
-          ".validate": "newData.isNumber()"
-        },
-        "clusters": {
-          "$key1": {
-            ".validate": "newData.isString()"
-          },
-          ".validate": "newData.hasChildren()"
-        },
-        "$other": {
-          ".validate": "false"
-        },
         ".read": "auth.uid == $userUid",
         ".write": "auth.uid == $userUid"
       }
@@ -28,67 +9,17 @@
     "usersPublic": {
       ".read": "true",
       "$userUid": {
-        ".validate": "newData.hasChildren(['name'])",
-        "name": {
-          ".validate": "newData.isString()"
-        },
-        "$other": {
-          ".validate": "false"
-        },
         ".write": "auth.uid == $userUid"
       }
     },
     "clusters": {
       "$clusterUuid": {
-        "metadata": {
-          ".validate": "newData.hasChildren(['name', 'notes', 'lastAuthor', 'lastChanged'])",
-          "name": {
-            ".validate": "newData.isString()"
-          },
-          "notes": {
-            ".validate": "newData.isString()"
-          },
-          "lastAuthor": {
-            ".validate": "newData.isString()"
-          },
-          "lastChanged": {
-            ".validate": "newData.isString()"
-          },
-          "$other": {
-            ".validate": "false"
-          },
-          ".write": "data.val() == null && auth != null || data.val() != null && newData.val() != null && newData.parent().parent().parent().child('clusterData').child($clusterUuid).child('writers').child(auth.uid).val() != null || data.val() != null && newData.val() == null && newData.parent().parent().parent().child('clusterData').child($clusterUuid).child('writers').child(auth.uid).val() != null",
-          ".read": "root.child('clusterData').child($clusterUuid).child('readers').child(auth.uid).val() != null"
-        }
+        ".write": "data.val() == null && auth != null || data.val() != null && newData.val() != null && newData.parent().parent().child('clusterData').child($clusterUuid).child('writers').child(auth.uid).val() != null || data.val() != null && newData.val() == null && newData.parent().parent().child('clusterData').child($clusterUuid).child('writers').child(auth.uid).val() != null",
+        ".read": "root.child('clusterData').child($clusterUuid).child('readers').child(auth.uid).val() != null"
       }
     },
     "clusterData": {
       "$clusterUuid": {
-        ".validate": "newData.hasChildren(['data'])",
-        "data": {
-          ".validate": "newData.hasChildren(['xml'])",
-          "xml": {
-            ".validate": "newData.isString()"
-          },
-          "$other": {
-            ".validate": "false"
-          }
-        },
-        "readers": {
-          "$key1": {
-            ".validate": "newData.isString()"
-          },
-          ".validate": "newData.hasChildren()"
-        },
-        "writers": {
-          "$key1": {
-            ".validate": "newData.isString()"
-          },
-          ".validate": "newData.hasChildren()"
-        },
-        "$other": {
-          ".validate": "false"
-        },
         ".write": "data.val() == null && auth != null || data.val() != null && newData.val() != null && newData.parent().parent().child('clusterData').child($clusterUuid).child('writers').child(auth.uid).val() != null || data.val() != null && newData.val() == null && newData.parent().parent().child('clusterData').child($clusterUuid).child('writers').child(auth.uid).val() != null",
         ".read": "root.child('clusterData').child($clusterUuid).child('readers').child(auth.uid).val() != null"
       }

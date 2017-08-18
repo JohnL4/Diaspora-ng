@@ -8,7 +8,7 @@ import { ClusterData } from './cluster-data';
 import { ClusterSerializerXML } from './cluster-serializer-xml';
 import { Uid } from './uid';
 import { User } from './user';
-import { ASCII_US, uniqueClusterName, minimalEncode, minimalDecode } from './utils';
+import { ASCII_US, uniqueClusterName, minimalEncode, minimalDecode, treeify } from './utils';
 import { ClusterContent } from "app/cluster-content";
 import { RuntimeEnvironment } from './runtime-environment';
 import { FirebaseConfig } from './firebase-config';
@@ -121,7 +121,7 @@ export class PersistenceService
             "diaspora-dev.firebaseapp.com",
             "https://diaspora-dev.firebaseio.com",
             "diaspora-dev",
-            "diaspora-dev.appspot.com",
+            'diaspora-dev.appspot.com',
             "35664389096"
          )),
       new RuntimeEnvironment("Production",
@@ -230,7 +230,7 @@ export class PersistenceService
 
       if (localStorage)
       {
-         let envIxStr = localStorage.getItem( PersistenceService.ENVIRONMENT_INDEX_KEY);
+         const envIxStr = localStorage.getItem( PersistenceService.ENVIRONMENT_INDEX_KEY);
          if (envIxStr == null)
             this._currentEnvironmentIndex = 0;
          else
@@ -291,6 +291,11 @@ export class PersistenceService
    private _initApp( anEnvironment: RuntimeEnvironment): void
    {
          firebase.initializeApp(anEnvironment.firebaseConfig);
+         // firebase.database.enableLogging( false, true); // Turn logging off, permanently (because it's unhelpful).
+         // The following logging is not helpful for debugging permission problems.
+         // firebase.database.enableLogging((
+         //    aMessage) => { console.log(`[FIREBASE] ${aMessage}`); },
+         //    false /* use true for non-custom logging */);
          firebase.auth().onAuthStateChanged(this.authStateChanged.bind(this), this.authError.bind(this));
    }
 
@@ -312,7 +317,7 @@ export class PersistenceService
     */
    public login(): void
    {
-      const me = this.constructor.name + ".login(): ";
+      const me = this.constructor.name + '.login(): ';
       console.log( me);
       this._loginWithPopup();
    }
@@ -458,16 +463,21 @@ export class PersistenceService
 
       updates[`/users/${this.currentUser.value.uid}/clusters/${aUniqueName}`] = null;
 
-      updates[`/clusters/${aUniqueName}/metadata`] = null;
+      updates[`/clusters/${aUniqueName}`] = null; // TODO: uncomment (this works)
 
       // These three permissions lists really should already be null, since I moved them over to /clusterData.
       // updates[`/clusters/${aUniqueName}/owners`] = null;
       // updates[`/clusters/${aUniqueName}/editors`] = null;
       // updates[`/clusters/${aUniqueName}/viewers`] = null;
 
-      updates[`/clusterData/${aUniqueName}/data`] = null;
-      updates[`/clusterData/${aUniqueName}/writers`] = null;
-      updates[`/clusterData/${aUniqueName}/readers`] = null;
+      updates[`/clusterData/${aUniqueName}`] = null; // TODO: uncomment (this fails)
+
+      // updates[`/clusterData/${aUniqueName}/data`] = null;
+      // updates[`/clusterData/${aUniqueName}/writers`] = null;
+      // updates[`/clusterData/${aUniqueName}/readers`] = null;
+
+      const opnJson = JSON.stringify( treeify( updates), null, 2);
+      console.log( `${me}: d/b updates:\n${opnJson}`);
 
       this._db.ref().update( updates); // TODO: test to make sure permission failure in one location blocks entire transaction.
                                        // For example, if an editor (not an owner) tries to delete a cluster.

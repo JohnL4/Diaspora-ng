@@ -39,19 +39,19 @@ let _alphaBravo: string[] =
       "Kilo",
       "Lima",
       "Mike",
-      "November",
-      "Oscar",
-      "Papa",
-      "Quebec",
-      "Romeo",
-      "Sierra",
-      "Tango",
+      'November',
+      'Oscar',
+      'Papa',
+      'Quebec',
+      'Romeo',
+      'Sierra',
+      'Tango',
       'Uniform',
-      "Victor",
-      "Whiskey",
-      "X-ray",
-      "Yankee",
-      "Zulu"
+      'Victor',
+      'Whiskey',
+      'X-ray',
+      'Yankee',
+      'Zulu'
    ];
 
 /**
@@ -74,7 +74,7 @@ export function uniqueClusterName( aCluster: Cluster, aUser: User): string
 {
    let uid = aUser ? aUser.uid : '';
    if (! uid)
-      uid = "";
+      uid = '';
    const retval = uniqueClusterNameFromUid( aCluster, uid);
    return retval;
 }
@@ -169,5 +169,43 @@ export function minimalDecode( aString: string): string
          }
          return innerRetval;
       });
+   return retval;
+}
+
+/**
+ * Converts input FireBase updates object whose keys contain slashes to an equivalent object whose keys contain no
+ * slashes.  Slash-delimited key parts indicate sub-objects (subtrees).  So, an input object that looks like
+ * {"a/b/c": "abcval"; "a/b/d": "abdval"; "m": "mval"} will be transofmred to
+ * {"a": {"b": {"c": "abcval"; "d": "abdval"}}; "m": "mval"}.
+ * @param aFirebaseUpdatesObject Inpout FireBase updates object
+ */
+export function treeify(aFirebaseUpdatesObject: Object): Object
+{
+   const retval = Object.create(null);
+   for (const prop in aFirebaseUpdatesObject)
+   {
+      if (typeof (aFirebaseUpdatesObject.hasOwnProperty) === 'undefined'
+         || aFirebaseUpdatesObject.hasOwnProperty(prop))
+      {
+         const propParts = prop.split('/');
+         if (propParts[0].length === 0)
+            // String started w/leading '/'; discard that.
+            propParts.shift();
+         let propBranchWalker: Object = retval; // = retval[propParts[0]];
+         while (propParts.length > 1)
+         {
+            if (propBranchWalker[propParts[0]])
+            {
+               // Do nothing
+            }
+            else
+               propBranchWalker[propParts[0]] = Object.create(null);
+            propBranchWalker = propBranchWalker[propParts[0]];
+            propParts.shift();
+         }
+         // assert propParts.length == 1
+         propBranchWalker[propParts[0]] = aFirebaseUpdatesObject[prop];
+      }
+   }
    return retval;
 }
