@@ -51,3 +51,15 @@
 
   See [[file:xml.org][xml.org]]
   
+* What took so long?
+
+  Let's see, what did I have to learn to do this project?
+
+  - Angular
+  - Typescript
+  - Firebase
+  - XML (schemas, design.  Any fool can write XML.)
+  - SVG
+  - Cytoscape (to a certain minimal degree)
+  - Bootstrap
+  - Google authentication
