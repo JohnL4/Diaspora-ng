@@ -63,3 +63,4 @@
   - Cytoscape (to a certain minimal degree)
   - Bootstrap
   - Google authentication
+  - Netlify (see the file =_redirects= in the =src= folder)
