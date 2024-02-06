@@ -9,9 +9,9 @@ repository should be dead, but all issues in that repository are still live.
 
 See
 
-* [../notes.org](notes.org)
-* [../xml.org](xml.org)
-* [../nosql.org](nosql.org)
+* [notes.org](notes.org)
+* [xml.org](xml.org)
+* [nosql.org](nosql.org)
 
 ## Development server
 
